@@ -1,8 +1,7 @@
 use std::fmt;
-use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum BrainfuckInstrRaw {
     Plus,
     Minus,
@@ -53,7 +52,7 @@ impl BrainfuckInstr {
             }
         }
 
-        return program;
+        program
     }
 
     /// Returns the line number, starting at 1
@@ -80,26 +79,79 @@ impl fmt::Display for BrainfuckInstr {
 
 #[derive(Debug)]
 pub struct BrainfuckProg {
-    // TODO I don't know how to handle this
-    path: &Path,
+    path: PathBuf,
     program: Vec<BrainfuckInstr>,
 }
 
 impl BrainfuckProg {
     fn new<P: AsRef<Path>>(path: P, content: String) -> Self {
         Self {
-            path: path.as_ref(),
+            path: path.as_ref().to_path_buf(),
             program: BrainfuckInstr::from_string(content),
         }
     }
 
-    fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
-        let content = std::fs::read_to_string(path).expect("Failed to read_to_string");
+    fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+        let content = std::fs::read_to_string(&path)?;
         Ok(Self::new(path, content))
     }
 
-    // TODO getters for private members
+    fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
+    fn program(&self) -> &[BrainfuckInstr] {
+        &self.program[..]
+    }
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::{BrainfuckInstrRaw, BrainfuckProg};
+    use std::path::Path;
+
+    #[test]
+    fn test_valid_program() {
+        let fake_path = "path/to/file.bf";
+        let another_path = "path/to/somewhere/else.bf";
+
+        // Construct
+        let b = BrainfuckProg::new(fake_path, "<>[]-+,.".to_string());
+
+        // Check the path is stored correctly
+        assert_eq!(Path::new(fake_path), b.path.as_path());
+        assert_ne!(Path::new(another_path), b.path.as_path());
+
+        // Check the program
+        let p = b.program();
+        assert_eq!(p[0].instr, BrainfuckInstrRaw::LessThan);
+        assert_eq!(p[1].instr, BrainfuckInstrRaw::GreaterThan);
+        assert_eq!(p[2].instr, BrainfuckInstrRaw::LeftBracket);
+        assert_eq!(p[3].instr, BrainfuckInstrRaw::RightBracket);
+        assert_eq!(p[4].instr, BrainfuckInstrRaw::Minus);
+        assert_eq!(p[5].instr, BrainfuckInstrRaw::Plus);
+        assert_eq!(p[6].instr, BrainfuckInstrRaw::Comma);
+        assert_eq!(p[7].instr, BrainfuckInstrRaw::Fullstop);
+
+        // Check the program backwards (verify BrainfuckInstrRaw PartialEq)
+        assert_ne!(p[7].instr, BrainfuckInstrRaw::LessThan);
+        assert_ne!(p[6].instr, BrainfuckInstrRaw::GreaterThan);
+        assert_ne!(p[5].instr, BrainfuckInstrRaw::LeftBracket);
+        assert_ne!(p[4].instr, BrainfuckInstrRaw::RightBracket);
+        assert_ne!(p[3].instr, BrainfuckInstrRaw::Minus);
+        assert_ne!(p[2].instr, BrainfuckInstrRaw::Plus);
+        assert_ne!(p[1].instr, BrainfuckInstrRaw::Comma);
+        assert_ne!(p[0].instr, BrainfuckInstrRaw::Fullstop);
+    }
+
+    #[test]
+    fn test_invalid_program() {
+        BrainfuckProg::new("path/to/file.bf", "<>[]-+,.".to_string());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_bad_path() {
+        BrainfuckProg::from_file("/path/to/file.bf").unwrap();
+    }
+}
