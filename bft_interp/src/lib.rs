@@ -1,6 +1,7 @@
 use std::default::Default;
 
-struct BrainfuckVM<T> {
+#[derive(Debug)]
+pub struct BrainfuckVM<T> {
     // TODO maybe we want to use std::cell::Cell
     cells: Vec<T>,
     cur_cell: usize,
@@ -12,7 +13,7 @@ where
     T: Clone,
     T: Default,
 {
-    fn new(num_cells: usize, is_growable: bool) -> Self {
+    pub fn new(num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
         let c: Vec<T> = vec![T::default(); n];
         BrainfuckVM {

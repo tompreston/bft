@@ -87,14 +87,14 @@ pub struct BrainfuckProg {
 }
 
 impl BrainfuckProg {
-    fn new<P: AsRef<Path>>(path: P, content: String) -> Self {
+    pub fn new<P: AsRef<Path>>(path: P, content: String) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
             program: BrainfuckInstr::from_string(content),
         }
     }
 
-    fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(&path)?;
         Ok(Self::new(path, content))
     }
