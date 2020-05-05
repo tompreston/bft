@@ -7,17 +7,14 @@ struct BrainfuckVM<T> {
     is_growable: bool,
 }
 
-impl<T> BrainfuckVM<T> {
+impl<T> BrainfuckVM<T>
+where
+    T: Clone,
+    T: Default,
+{
     fn new(num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
-
-        // TODO figure this out
-        //let c: Vec<T> = vec![Default::default(); n];
-        let mut cells: Vec<T> = Vec::new();
-        for i in 0..n {
-            cells.push(0); // waaaa, how do I know the default val of a gerneic
-        }
-
+        let c: Vec<T> = vec![T::default(); n];
         BrainfuckVM {
             cells: c,
             cur_cell: 0,
@@ -32,7 +29,10 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_init() {
-        for num_cells in 0..10 {
+        let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(0, false);
+        assert_eq!(bfvm.cells.len(), 30_000);
+
+        for num_cells in 1..11 {
             let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(num_cells, false);
             assert_eq!(bfvm.cells.len(), num_cells);
         }
