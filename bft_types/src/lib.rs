@@ -32,7 +32,7 @@ impl BrainfuckInstrRaw {
 
 /// Represents the raw Brainfuck instruction and where it is in the file.
 #[derive(Debug)]
-struct BrainfuckInstr {
+pub struct BrainfuckInstr {
     instr: BrainfuckInstrRaw,
     line: usize,
     column: usize,
@@ -58,8 +58,12 @@ impl BrainfuckInstr {
     }
 
     /// Returns the line number, starting at 1
-    fn line1(&self) -> usize {
+    pub fn line1(&self) -> usize {
         self.line + 1
+    }
+
+    pub fn column(&self) -> usize {
+        self.column
     }
 }
 
@@ -99,11 +103,11 @@ impl BrainfuckProg {
         Ok(Self::new(path, content))
     }
 
-    fn path(&self) -> &PathBuf {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
-    fn program(&self) -> &[BrainfuckInstr] {
+    pub fn program(&self) -> &[BrainfuckInstr] {
         &self.program[..]
     }
 }

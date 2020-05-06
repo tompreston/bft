@@ -1,5 +1,8 @@
+use bft_types::BrainfuckProg;
 use std::default::Default;
 
+/// Represents a Brainfuck Virtual Machine that interperets and runs
+/// bft_types::BrainfuckProg programs.
 #[derive(Debug)]
 pub struct BrainfuckVM<T> {
     // TODO maybe we want to use std::cell::Cell
@@ -20,6 +23,12 @@ where
             cells: c,
             cur_cell: 0,
             is_growable: is_growable,
+        }
+    }
+
+    pub fn run_prog(&self, bf_prog: &BrainfuckProg) {
+        for instr in bf_prog.program() {
+            println!("[{}:{}] {}", instr.line1(), instr.column(), instr);
         }
     }
 }
