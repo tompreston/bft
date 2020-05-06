@@ -117,8 +117,26 @@ mod tests {
     use super::{BrainfuckInstrRaw, BrainfuckProg};
     use std::path::Path;
 
+    // Store the line and column
+    struct Position {
+        line: usize,
+        column: usize,
+    }
+
+    // Some default sequence, which we can test against.
+    const CORRECT_INSTRS: [BrainfuckInstrRaw; 8] = [
+        BrainfuckInstrRaw::LessThan,
+        BrainfuckInstrRaw::GreaterThan,
+        BrainfuckInstrRaw::LeftBracket,
+        BrainfuckInstrRaw::RightBracket,
+        BrainfuckInstrRaw::Minus,
+        BrainfuckInstrRaw::Plus,
+        BrainfuckInstrRaw::Comma,
+        BrainfuckInstrRaw::Fullstop,
+    ];
+
     #[test]
-    fn test_valid_program() {
+    fn test_program() {
         let fake_path = "path/to/file.bf";
         let another_path = "path/to/somewhere/else.bf";
 
@@ -131,29 +149,62 @@ mod tests {
 
         // Check the program
         let p = b.program();
-        assert_eq!(p[0].instr, BrainfuckInstrRaw::LessThan);
-        assert_eq!(p[1].instr, BrainfuckInstrRaw::GreaterThan);
-        assert_eq!(p[2].instr, BrainfuckInstrRaw::LeftBracket);
-        assert_eq!(p[3].instr, BrainfuckInstrRaw::RightBracket);
-        assert_eq!(p[4].instr, BrainfuckInstrRaw::Minus);
-        assert_eq!(p[5].instr, BrainfuckInstrRaw::Plus);
-        assert_eq!(p[6].instr, BrainfuckInstrRaw::Comma);
-        assert_eq!(p[7].instr, BrainfuckInstrRaw::Fullstop);
+
+        for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
+            assert_eq!(p[i].instr, *cinstr);
+            assert_eq!(p[i].line1(), 1);
+            assert_eq!(p[i].column(), i);
+        }
 
         // Check the program backwards (verify BrainfuckInstrRaw PartialEq)
-        assert_ne!(p[7].instr, BrainfuckInstrRaw::LessThan);
-        assert_ne!(p[6].instr, BrainfuckInstrRaw::GreaterThan);
-        assert_ne!(p[5].instr, BrainfuckInstrRaw::LeftBracket);
-        assert_ne!(p[4].instr, BrainfuckInstrRaw::RightBracket);
-        assert_ne!(p[3].instr, BrainfuckInstrRaw::Minus);
-        assert_ne!(p[2].instr, BrainfuckInstrRaw::Plus);
-        assert_ne!(p[1].instr, BrainfuckInstrRaw::Comma);
-        assert_ne!(p[0].instr, BrainfuckInstrRaw::Fullstop);
+        for (i, cinstr) in CORRECT_INSTRS.iter().rev().enumerate() {
+            assert_ne!(p[i].instr, *cinstr);
+        }
     }
 
     #[test]
-    fn test_invalid_program() {
-        BrainfuckProg::new("path/to/file.bf", "<>[]-+,.".to_string());
+    fn test_program_with_comments() {
+        let prog_str = "this < is > a [ valid ]\n\
+            brainfuck - program +\n\
+            these , are . comments"
+            .to_string();
+        let correct_pos = [
+            Position { line: 0, column: 5 },
+            Position {
+                line: 0,
+                column: 10,
+            },
+            Position {
+                line: 0,
+                column: 14,
+            },
+            Position {
+                line: 0,
+                column: 22,
+            },
+            Position {
+                line: 1,
+                column: 10,
+            },
+            Position {
+                line: 1,
+                column: 20,
+            },
+            Position { line: 2, column: 6 },
+            Position {
+                line: 2,
+                column: 12,
+            },
+        ];
+        let b = BrainfuckProg::new("path/to/file.bf", prog_str);
+
+        // Check the program
+        let p = b.program();
+        for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
+            assert_eq!(p[i].instr, *cinstr);
+            assert_eq!(p[i].line1(), correct_pos[i].line + 1);
+            assert_eq!(p[i].column(), correct_pos[i].column);
+        }
     }
 
     #[test]
