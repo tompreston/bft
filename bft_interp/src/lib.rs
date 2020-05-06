@@ -16,6 +16,19 @@ where
     T: Clone,
     T: Default,
 {
+    /// Returns a new BrainfuckVM with num_cells.
+    ///
+    /// # Arguments
+    ///
+    /// * `num_cells` - Number of data cells in the BrainfuckVM (default: 30000)
+    /// * `is_growable` - Sets whether the number of cells can change.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bft_interp::BrainfuckVM;
+    /// let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(0, false);
+    /// ```
     pub fn new(num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
         let c: Vec<T> = vec![T::default(); n];
