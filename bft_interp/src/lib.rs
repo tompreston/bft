@@ -1,11 +1,16 @@
+//! Brainfuck interpreter
+//!
+//! This crate contains all the interpreter logic for the BrainfuckVM.
+
 use bft_types::BrainfuckProg;
 use std::default::Default;
 
-/// Represents a Brainfuck Virtual Machine that interperets and runs
-/// bft_types::BrainfuckProg programs.
+/// Represents a Brainfuck Virtual Machine.
+///
+/// The Brainfuck Virtual Machine interperets and runs BrainfuckProg programs.
+/// The type T specifies what type the BrainfuckVM data cells are.
 #[derive(Debug)]
 pub struct BrainfuckVM<T> {
-    // TODO maybe we want to use std::cell::Cell
     cells: Vec<T>,
     cur_cell: usize,
     is_growable: bool,
