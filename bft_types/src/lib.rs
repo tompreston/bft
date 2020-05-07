@@ -1,9 +1,14 @@
+//! Brainfuck interpreter types
+//!
+//! This crate contains all the data types necessary for the Brainfuck
+//! interpreter project.
+
 use std::fmt;
 use std::path::{Path, PathBuf};
 
 /// Represents the eight raw Brainfuck instructions.
 #[derive(Debug, PartialEq)]
-enum BrainfuckInstrRaw {
+pub enum BrainfuckInstrRaw {
     Plus,
     Minus,
     LessThan,
@@ -15,6 +20,7 @@ enum BrainfuckInstrRaw {
 }
 
 impl BrainfuckInstrRaw {
+    /// Returns a BrainfuckInstrRaw from the given character.
     fn from_byte(c: u8) -> Option<BrainfuckInstrRaw> {
         match c {
             b'+' => Some(BrainfuckInstrRaw::Plus),
@@ -39,7 +45,20 @@ pub struct BrainfuckInstr {
 }
 
 impl BrainfuckInstr {
-    fn from_string(s: String) -> Vec<Self> {
+    /// Returns a vector of BrainfuckInstr's, parsed from the given String.
+    ///
+    /// # Example
+    /// ```
+    /// # use bft_types::{BrainfuckInstr, BrainfuckInstrRaw};
+    /// let bf = BrainfuckInstr::from_string("<>".to_string());
+    ///
+    /// assert_eq!(bf[0].line1(), 1);
+    /// assert_eq!(bf[0].column(), 0);
+    ///
+    /// assert_eq!(bf[1].line1(), 1);
+    /// assert_eq!(bf[1].column(), 1);
+    /// ```
+    pub fn from_string(s: String) -> Vec<Self> {
         let mut program: Vec<BrainfuckInstr> = Vec::new();
 
         for (l, pline) in s.lines().enumerate() {
@@ -57,11 +76,12 @@ impl BrainfuckInstr {
         program
     }
 
-    /// Returns the line number, starting at 1
+    /// Returns the Brainfuck instruction line number, starting at 1
     pub fn line1(&self) -> usize {
         self.line + 1
     }
 
+    /// Returns the Brainfuck instruction column
     pub fn column(&self) -> usize {
         self.column
     }
@@ -98,15 +118,26 @@ impl BrainfuckProg {
         }
     }
 
+    /// Returns a new instance of BrainfuckProg, parsed from the file located at
+    /// the given Path-like reference.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::path::Path;
+    /// let bf = BrainfuckProg::from_file(Path::new("path/to/prog.bf"));
+    /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(&path)?;
         Ok(Self::new(path, content))
     }
 
+    /// Returns a reference to the BrainfuckProg's path.
     pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
+    /// Returns a reference to the BrainfuckProg's program.
     pub fn program(&self) -> &[BrainfuckInstr] {
         &self.program[..]
     }
