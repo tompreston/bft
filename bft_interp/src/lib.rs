@@ -36,11 +36,11 @@ where
     /// ```
     pub fn new(num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
-        let c: Vec<T> = vec![T::default(); n];
+        let cells: Vec<T> = vec![T::default(); n];
         BrainfuckVM {
-            cells: c,
+            cells,
             cur_cell: 0,
-            is_growable: is_growable,
+            is_growable,
         }
     }
 
