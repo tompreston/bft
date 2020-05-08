@@ -158,22 +158,22 @@ impl BrainfuckProg {
             } else if bf_instr.instr == BrainfuckInstrRaw::RightBracket {
                 match left_brackets.pop() {
                     Some(_) => (),
-                    None => {
-                        return Err(format!(
-                            "[{}:{}] Error: Unmatched ]",
-                            bf_instr.line1(),
-                            bf_instr.column()
-                        ))
-                    }
+                    None => return Err(self.error_msg(bf_instr, "Unmatched ]".to_string())),
                 };
             }
         }
 
         // Error if there are remaining unmatched left_brackets
         match left_brackets.iter().last() {
-            Some(v) => Err(format!("[{}:{}] Error: Unmatched [", v.line1(), v.column())),
+            Some(v) => Err(self.error_msg(v, "Unmatched [".to_string())),
             None => Ok(()),
         }
+    }
+
+    /// Returns a nicely formatted error message.
+    fn error_msg(&self, instr: &BrainfuckInstr, msg: String) -> String {
+        let path_str = self.path().to_string_lossy().into_owned();
+        format!("{}:{}:{}: {}", path_str, instr.line1(), instr.column(), msg)
     }
 }
 

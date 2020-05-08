@@ -5,9 +5,7 @@ use std::error::Error;
 mod cli;
 use cli::{BrainfuckOpt, StructOpt};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let opt = BrainfuckOpt::from_args();
-
+fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     let num_cells = match opt.cells {
         Some(n) => n,
         None => 0,
@@ -18,4 +16,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     bf_prog.check()?;
     bf_vm.run_prog(&bf_prog);
     Ok(())
+}
+
+fn main() {
+    let opt = BrainfuckOpt::from_args();
+    std::process::exit(match run_bft(opt) {
+        Ok(_) => 0,
+        Err(err) => {
+            eprintln!("bft: error: {}", err);
+            1
+        }
+    });
 }
