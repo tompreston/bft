@@ -15,6 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let bf_vm: BrainfuckVM<u8> = BrainfuckVM::new(num_cells, opt.extensible);
 
     let bf_prog = BrainfuckProg::from_file(opt.file)?;
+    bf_prog.check()?;
     bf_vm.run_prog(&bf_prog);
     Ok(())
 }

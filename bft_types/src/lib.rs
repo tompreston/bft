@@ -141,6 +141,40 @@ impl BrainfuckProg {
     pub fn program(&self) -> &[BrainfuckInstr] {
         &self.program[..]
     }
+
+    /// Checks the program and returns the Result.
+    pub fn check(&self) -> Result<(), String> {
+        self.check_brackets()
+    }
+
+    /// Checks the left and right brackets and returns the Result.
+    fn check_brackets(&self) -> Result<(), String> {
+        let mut left_brackets: Vec<&BrainfuckInstr> = Vec::new();
+
+        // Collect left brackets and pop when we find matching right brackets.
+        for bf_instr in &self.program {
+            if bf_instr.instr == BrainfuckInstrRaw::LeftBracket {
+                left_brackets.push(&bf_instr);
+            } else if bf_instr.instr == BrainfuckInstrRaw::RightBracket {
+                match left_brackets.pop() {
+                    Some(_) => (),
+                    None => {
+                        return Err(format!(
+                            "[{}:{}] Error: Unmatched ]",
+                            bf_instr.line1(),
+                            bf_instr.column()
+                        ))
+                    }
+                };
+            }
+        }
+
+        // Error if there are remaining unmatched left_brackets
+        match left_brackets.iter().last() {
+            Some(v) => Err(format!("[{}:{}] Error: Unmatched [", v.line1(), v.column())),
+            None => Ok(()),
+        }
+    }
 }
 
 #[cfg(test)]
