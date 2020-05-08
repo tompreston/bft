@@ -15,3 +15,4 @@ members = [
 [dependencies]
 bft_types = { path = "bft_types" }
 bft_interp = { path = "bft_interp" }
+structopt = "0.3"
