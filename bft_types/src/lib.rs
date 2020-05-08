@@ -273,6 +273,23 @@ mod tests {
     }
 
     #[test]
+    fn test_program_with_matched_brackets() {
+        let fake_path = "path/to/file.bf";
+        let b = BrainfuckProg::new(fake_path, "<>[[[]-]+],.".to_string());
+        b.check().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_program_with_unmatched_brackets() {
+        let fake_path = "path/to/file.bf";
+        let b1 = BrainfuckProg::new(fake_path, "<>[[]-+,.".to_string());
+        b1.check().unwrap();
+        let b2 = BrainfuckProg::new(fake_path, "<>[[]]]-+,.".to_string());
+        b2.check().unwrap();
+    }
+
+    #[test]
     #[should_panic]
     fn test_bad_path() {
         BrainfuckProg::from_file("/path/to/file.bf").unwrap();
