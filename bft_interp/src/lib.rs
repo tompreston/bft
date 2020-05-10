@@ -10,17 +10,27 @@ pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
 }
 
+pub trait Wrapped {
+    fn wrapping_increment(&self) -> Self;
+    fn wrapping_decrement(&self) -> Self;
+}
+
+impl Wrapped for u8 {
+    fn wrapping_increment(&self) -> u8 {
+        self.wrapping_add(1)
+    }
+
+    fn wrapping_decrement(&self) -> u8 {
+        self.wrapping_sub(1)
+    }
+}
+
 /// Represents a Brainfuck Virtual Machine.
 ///
 /// The Brainfuck Virtual Machine interperets and runs BrainfuckProg programs.
 /// The type T specifies what type the BrainfuckVM data cells are.
 #[derive(Debug)]
-pub struct BrainfuckVM<'a, T>
-where
-    // TODO fix these
-    T: num_traits::ops::wrapping::WrappingAdd,
-    T: num_traits::ops::wrapping::WrappingSub,
-{
+pub struct BrainfuckVM<'a, T> {
     /// Data cells in the Brainfuck Virtual Machine.
     cells: Vec<T>,
 
@@ -42,6 +52,7 @@ impl<'a, T> BrainfuckVM<'a, T>
 where
     T: Clone,
     T: Default,
+    T: Wrapped,
 {
     /// Returns a new BrainfuckVM with num_cells.
     ///
@@ -104,12 +115,12 @@ where
 
     /// Increment the current data cell (wraps on overflow).
     pub fn increment_cell(&mut self) {
-        self.cells[self.head].wrapping_add(1)
+        self.cells[self.head].wrapping_increment();
     }
 
     /// Decrement the current data cell (wraps on overflow).
     pub fn decrement_cell(&mut self) {
-        self.cells[self.head].wrapping_sub(1)
+        self.cells[self.head].wrapping_decrement();
     }
 }
 
