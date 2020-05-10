@@ -30,7 +30,7 @@ pub struct BrainfuckVM<'a, T> {
     pc: usize,
 
     /// The Brainfuck program we are running.
-    prog: &'a BrainfuckProg,
+    program: &'a BrainfuckProg,
 }
 
 impl<'a, T> BrainfuckVM<'a, T>
@@ -42,7 +42,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `prog` - The Brainfuck program.
+    /// * `program` - The Brainfuck program.
     /// * `num_cells` - Number of data cells in the BrainfuckVM (default: 30000)
     /// * `is_growable` - Sets whether the number of cells can change.
     ///
@@ -54,7 +54,7 @@ where
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
     /// let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// ```
-    pub fn new(prog: &'a BrainfuckProg, num_cells: usize, is_growable: bool) -> Self {
+    pub fn new(program: &'a BrainfuckProg, num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
         let cells: Vec<T> = vec![T::default(); n];
         BrainfuckVM {
@@ -62,12 +62,12 @@ where
             is_growable,
             head: 0,
             pc: 0,
-            prog,
+            program,
         }
     }
 
-    pub fn run_prog(&self) {
-        for instr in self.prog.program() {
+    pub fn run_program(&self) {
+        for instr in self.program.instrs() {
             println!("[{}:{}] {}", instr.line1(), instr.column(), instr);
         }
     }
@@ -77,7 +77,7 @@ where
     pub fn move_head_left(&mut self) -> Result<(), BrainfuckVMError> {
         if self.head == 0 {
             return Err(BrainfuckVMError::InvalidPosition(
-                &self.prog.program()[self.pc],
+                &self.program.instrs()[self.pc],
             ));
         }
         self.head -= 1;
@@ -90,7 +90,7 @@ where
         let new_head = self.head + 1;
         if new_head >= self.cells.len() {
             return Err(BrainfuckVMError::InvalidPosition(
-                &self.prog.program()[self.pc],
+                &self.program.instrs()[self.pc],
             ));
         }
         self.head = new_head;

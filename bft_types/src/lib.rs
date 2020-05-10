@@ -59,12 +59,12 @@ impl BrainfuckInstr {
     /// assert_eq!(bf[1].column(), 1);
     /// ```
     pub fn from_string(s: String) -> Vec<Self> {
-        let mut program: Vec<BrainfuckInstr> = Vec::new();
+        let mut instrs: Vec<BrainfuckInstr> = Vec::new();
 
         for (l, pline) in s.lines().enumerate() {
             for (c, pbyte) in pline.bytes().enumerate() {
                 if let Some(iraw) = BrainfuckInstrRaw::from_byte(pbyte) {
-                    program.push(BrainfuckInstr {
+                    instrs.push(BrainfuckInstr {
                         instr: iraw,
                         line: l,
                         column: c,
@@ -73,7 +73,7 @@ impl BrainfuckInstr {
             }
         }
 
-        program
+        instrs
     }
 
     /// Returns the Brainfuck instruction line number, starting at 1
@@ -107,14 +107,14 @@ impl fmt::Display for BrainfuckInstr {
 #[derive(Debug)]
 pub struct BrainfuckProg {
     path: PathBuf,
-    program: Vec<BrainfuckInstr>,
+    instrs: Vec<BrainfuckInstr>,
 }
 
 impl BrainfuckProg {
     pub fn new<P: AsRef<Path>>(path: P, content: String) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
-            program: BrainfuckInstr::from_string(content),
+            instrs: BrainfuckInstr::from_string(content),
         }
     }
 
@@ -137,9 +137,9 @@ impl BrainfuckProg {
         &self.path
     }
 
-    /// Returns a reference to the BrainfuckProg's program.
-    pub fn program(&self) -> &[BrainfuckInstr] {
-        &self.program[..]
+    /// Returns a reference to the BrainfuckProg's instructions.
+    pub fn instrs(&self) -> &[BrainfuckInstr] {
+        &self.instrs[..]
     }
 
     /// Checks the program and returns the Result.
@@ -152,7 +152,7 @@ impl BrainfuckProg {
         let mut left_brackets: Vec<&BrainfuckInstr> = Vec::new();
 
         // Collect left brackets and pop when we find matching right brackets.
-        for bf_instr in &self.program {
+        for bf_instr in &self.instrs {
             if bf_instr.instr == BrainfuckInstrRaw::LeftBracket {
                 left_brackets.push(&bf_instr);
             } else if bf_instr.instr == BrainfuckInstrRaw::RightBracket {
@@ -213,7 +213,7 @@ mod tests {
         assert_ne!(Path::new(another_path), b.path.as_path());
 
         // Check the program
-        let p = b.program();
+        let p = b.instrs();
 
         for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
             assert_eq!(p[i].instr, *cinstr);
@@ -264,7 +264,7 @@ mod tests {
         let b = BrainfuckProg::new("path/to/file.bf", prog_str);
 
         // Check the program
-        let p = b.program();
+        let p = b.instrs();
         for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
             assert_eq!(p[i].instr, *cinstr);
             assert_eq!(p[i].line1(), correct_pos[i].line + 1);
