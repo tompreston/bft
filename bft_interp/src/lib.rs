@@ -16,10 +16,20 @@ pub enum BrainfuckVMError<'a> {
 /// The type T specifies what type the BrainfuckVM data cells are.
 #[derive(Debug)]
 pub struct BrainfuckVM<'a, T> {
+    /// Data cells in the Brainfuck Virtual Machine.
     cells: Vec<T>,
+
+    /// If we overflow on the data cells, this sets if we automatically increase
+    /// the cells vector.
     is_growable: bool,
+
+    /// The data pointer. This is analogous to the head reading a data tape.
     head: usize,
+
+    /// The program counter. This is the index of the current instruction.
     pc: usize,
+
+    /// The Brainfuck program we are running.
     prog: &'a BrainfuckProg,
 }
 
