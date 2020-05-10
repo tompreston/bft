@@ -15,7 +15,12 @@ pub enum BrainfuckVMError<'a> {
 /// The Brainfuck Virtual Machine interperets and runs BrainfuckProg programs.
 /// The type T specifies what type the BrainfuckVM data cells are.
 #[derive(Debug)]
-pub struct BrainfuckVM<'a, T> {
+pub struct BrainfuckVM<'a, T>
+where
+    // TODO fix these
+    T: num_traits::ops::wrapping::WrappingAdd,
+    T: num_traits::ops::wrapping::WrappingSub,
+{
     /// Data cells in the Brainfuck Virtual Machine.
     cells: Vec<T>,
 
@@ -95,6 +100,16 @@ where
         }
         self.head = new_head;
         Ok(())
+    }
+
+    /// Increment the current data cell (wraps on overflow).
+    pub fn increment_cell(&mut self) {
+        self.cells[self.head].wrapping_add(1)
+    }
+
+    /// Decrement the current data cell (wraps on overflow).
+    pub fn decrement_cell(&mut self) {
+        self.cells[self.head].wrapping_sub(1)
     }
 }
 
