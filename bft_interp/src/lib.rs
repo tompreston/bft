@@ -10,12 +10,17 @@ pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
 }
 
-pub trait Wrapped {
+/// Describes the traits we expect the Brainfuck VW generic cell-type to have.
+pub trait BrainfuckCellKind {
+    /// Increment the cell (wraps on overflow).
     fn wrapping_increment(&self) -> Self;
+
+    /// Decrement the cell (wraps on underflow).
     fn wrapping_decrement(&self) -> Self;
 }
 
-impl Wrapped for u8 {
+/// An implementation of the BrainfuckCellKind traits for the u8 type.
+impl BrainfuckCellKind for u8 {
     fn wrapping_increment(&self) -> u8 {
         self.wrapping_add(1)
     }
@@ -52,7 +57,7 @@ impl<'a, T> BrainfuckVM<'a, T>
 where
     T: Clone,
     T: Default,
-    T: Wrapped,
+    T: BrainfuckCellKind,
 {
     /// Returns a new BrainfuckVM with num_cells.
     ///
@@ -114,13 +119,13 @@ where
     }
 
     /// Increment the current data cell (wraps on overflow).
-    pub fn increment_cell(&mut self) {
-        self.cells[self.head].wrapping_increment();
+    pub fn cell_increment(&mut self) {
+        self.cells[self.head] = self.cells[self.head].wrapping_increment();
     }
 
     /// Decrement the current data cell (wraps on overflow).
-    pub fn decrement_cell(&mut self) {
-        self.cells[self.head].wrapping_decrement();
+    pub fn cell_decrement(&mut self) {
+        self.cells[self.head] = self.cells[self.head].wrapping_decrement();
     }
 }
 
@@ -176,4 +181,38 @@ mod tests {
         bfvm.move_head_right().unwrap();
         bfvm.move_head_right().unwrap();
     }
+
+    #[test]
+    fn test_brainfuckvm_cell_increment() {
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let num_cells = 2;
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+
+        // We're going to test incrementing every cell
+        for cell_increment in 0..num_cells {
+            // Increment until we overflow
+            for i in 0..=u8::MAX {
+                // Check the value of every cell
+                for cell_check in 0..num_cells {
+                    if cell_check == cell_increment {
+                        assert_eq!(bfvm.cells[cell_check], i);
+                    } else {
+                        assert_eq!(bfvm.cells[cell_check], 0);
+                    }
+                }
+                bfvm.cell_increment();
+            }
+            // Now we expect the overflow and every cell should be 0
+            for cell_check in 0..num_cells {
+                assert_eq!(bfvm.cells[cell_check], 0);
+            }
+
+            if cell_increment < num_cells - 1 {
+                bfvm.move_head_right().unwrap();
+            }
+        }
+    }
+
+    // TODO decrement. Maybe we can do this generically since it'll be repeating
+    // above.
 }
