@@ -12,6 +12,8 @@ pub enum BrainfuckVMError<'a> {
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
+/// Implementations of this trait must also implement the supertraits:
+/// Debug, Default and Clone
 pub trait BrainfuckCellKind: Debug + Default + Clone {
     /// Increment the cell (wraps on overflow).
     fn wrapping_increment(&self) -> Self;
