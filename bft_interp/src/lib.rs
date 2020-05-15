@@ -185,7 +185,7 @@ mod tests {
     #[test]
     fn test_brainfuckvm_cell_increment() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
-        let num_cells = 2;
+        let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
 
         // We're going to test incrementing every cell
