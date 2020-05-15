@@ -189,7 +189,7 @@ mod tests {
 
         // We're going to test incrementing every cell
         for cell_increment in 0..num_cells {
-            // Increment until we overflow
+            // Check and increment, until we overflow
             for i in 0..=u8::MAX {
                 // Check the value of every cell
                 for cell_check in 0..num_cells {
@@ -212,6 +212,31 @@ mod tests {
         }
     }
 
-    // TODO decrement. Maybe we can do this generically since it'll be repeating
-    // above.
+    #[test]
+    fn test_brainfuckvm_cell_decrement() {
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let num_cells = 123;
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+
+        // We're going to test decrementing every cell
+        for cell_decrement in 0..num_cells {
+            // Check and decrement, until we overflow
+            for i in 0..=u8::MAX {
+                bfvm.cell_decrement();
+                // Check the value of every cell.
+                // We should have already underflowed.
+                for cell_check in 0..num_cells {
+                    if cell_check == cell_decrement {
+                        assert_eq!(bfvm.cells[cell_check], u8::MAX - i);
+                    } else {
+                        assert_eq!(bfvm.cells[cell_check], 0);
+                    }
+                }
+            }
+
+            if cell_decrement < num_cells - 1 {
+                bfvm.move_head_right().unwrap();
+            }
+        }
+    }
 }
