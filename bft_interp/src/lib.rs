@@ -4,6 +4,7 @@
 
 use bft_types::{BrainfuckInstr, BrainfuckProg};
 use std::default::Default;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum BrainfuckVMError<'a> {
@@ -11,7 +12,7 @@ pub enum BrainfuckVMError<'a> {
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
-pub trait BrainfuckCellKind {
+pub trait BrainfuckCellKind: Debug + Default + Clone {
     /// Increment the cell (wraps on overflow).
     fn wrapping_increment(&self) -> Self;
 
@@ -55,8 +56,6 @@ pub struct BrainfuckVM<'a, T> {
 
 impl<'a, T> BrainfuckVM<'a, T>
 where
-    T: Clone,
-    T: Default,
     T: BrainfuckCellKind,
 {
     /// Returns a new BrainfuckVM with num_cells.
