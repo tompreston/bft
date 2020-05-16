@@ -5,10 +5,12 @@
 use bft_types::{BrainfuckInstr, BrainfuckProg};
 use std::default::Default;
 use std::fmt::Debug;
+use std::io;
 
 #[derive(Debug)]
 pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
+    IOError(io::Error, &'a BrainfuckInstr),
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
@@ -20,6 +22,9 @@ pub trait BrainfuckCellKind: Debug + Default + Clone {
 
     /// Decrement the cell (wraps on underflow).
     fn wrapping_decrement(&self) -> Self;
+
+    /// Read into cell from reader
+    fn read_from(&mut self, reader: &mut impl io::Read) -> io::Result<usize>;
 }
 
 /// An implementation of the BrainfuckCellKind traits for the u8 type.
@@ -30,6 +35,20 @@ impl BrainfuckCellKind for u8 {
 
     fn wrapping_decrement(&self) -> u8 {
         self.wrapping_sub(1)
+    }
+
+    // It would be nice to use ? on reader.read(), however this is not easy to
+    // do because we need to convert from io::Error, to BrainfuckCellKind.
+    // Also, I don't know if there's another way to read into a single byte.
+    fn read_from(&mut self, reader: &mut impl io::Read) -> io::Result<usize> {
+        let mut buff = [0; 1];
+        match reader.read(&mut buff) {
+            Ok(s) => {
+                *self = buff[0];
+                Ok(s)
+            }
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -98,9 +117,7 @@ where
     /// cell 0.
     pub fn move_head_left(&mut self) -> Result<(), BrainfuckVMError> {
         if self.head == 0 {
-            return Err(BrainfuckVMError::InvalidPosition(
-                &self.program.instrs()[self.pc],
-            ));
+            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head -= 1;
         Ok(())
@@ -111,9 +128,7 @@ where
     pub fn move_head_right(&mut self) -> Result<(), BrainfuckVMError> {
         let new_head = self.head + 1;
         if new_head >= self.cells.len() {
-            return Err(BrainfuckVMError::InvalidPosition(
-                &self.program.instrs()[self.pc],
-            ));
+            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head = new_head;
         Ok(())
@@ -128,12 +143,26 @@ where
     pub fn cell_decrement(&mut self) {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
     }
+
+    /// Read into the cell, from some reader
+    pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
+        match self.cells[self.head].read_from(reader) {
+            Ok(s) => Ok(s),
+            Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
+        }
+    }
+
+    /// Return the current instruction using the program-counter
+    fn current_instr(&self) -> &BrainfuckInstr {
+        &self.program.instrs()[self.pc]
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::BrainfuckProg;
     use super::BrainfuckVM;
+    use std::io;
 
     const FKPATH: &str = "fake/path.bf";
 
@@ -239,6 +268,28 @@ mod tests {
             if cell_decrement < num_cells - 1 {
                 bfvm.move_head_right().unwrap();
             }
+        }
+    }
+
+    #[test]
+    fn test_cell_read() {
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let num_cells = 123;
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+
+        // Check every cell is zero
+        for cell_check in 0..num_cells {
+            assert_eq!(bfvm.cells[cell_check], 0);
+        }
+
+        let val = 42;
+        let mut buff = io::Cursor::new(vec![val, 0]);
+        bfvm.cell_read(&mut buff).unwrap();
+
+        // Now check the first cell is `val`, and every other cell is zero
+        assert_eq!(bfvm.cells[0], val);
+        for cell_check in 1..num_cells {
+            assert_eq!(bfvm.cells[cell_check], 0);
         }
     }
 }
