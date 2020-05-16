@@ -25,6 +25,9 @@ pub trait BrainfuckCellKind: Debug + Default + Clone {
 
     /// Read into cell from reader
     fn read_from(&mut self, reader: &mut impl io::Read) -> io::Result<usize>;
+
+    /// Write from cell to writer
+    fn write_to(&mut self, writer: &mut impl io::Write) -> io::Result<usize>;
 }
 
 /// An implementation of the BrainfuckCellKind traits for the u8 type.
@@ -49,6 +52,11 @@ impl BrainfuckCellKind for u8 {
             }
             Err(e) => Err(e),
         }
+    }
+
+    fn write_to(&mut self, writer: &mut impl io::Write) -> io::Result<usize> {
+        let mut buff = [*self; 1];
+        writer.write(&mut buff)
     }
 }
 
@@ -144,9 +152,17 @@ where
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
     }
 
-    /// Read into the cell, from some reader
+    /// Read into the current cell, from some reader
     pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
         match self.cells[self.head].read_from(reader) {
+            Ok(s) => Ok(s),
+            Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
+        }
+    }
+
+    /// Write from the current cell, to some writer
+    pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
+        match self.cells[self.head].write_to(writer) {
             Ok(s) => Ok(s),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
@@ -272,7 +288,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cell_read() {
+    fn test_cell_read_u8() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
         let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
@@ -291,5 +307,24 @@ mod tests {
         for cell_check in 1..num_cells {
             assert_eq!(bfvm.cells[cell_check], 0);
         }
+    }
+
+    #[test]
+    fn test_cell_write_u8() {
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let num_cells = 123;
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+
+        // Set the expected value, which is to be read
+        let val = 123;
+        bfvm.cells[0] = val;
+
+        // Read the value, throw (unwrap) the error if it fails
+        let mut buff = io::Cursor::new(vec![0, 1]);
+        bfvm.cell_write(&mut buff).unwrap();
+
+        // Check it was written
+        let r = buff.get_ref();
+        assert_eq!(r[0], val);
     }
 }
