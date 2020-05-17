@@ -11,6 +11,7 @@ use std::io;
 pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
     IOError(io::Error, &'a BrainfuckInstr),
+    InvalidProgramCounter(&'a BrainfuckInstr),
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
@@ -128,7 +129,7 @@ where
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head -= 1;
-        Ok(self.next_pc())
+        self.next_pc()
     }
 
     /// Move the tape head one cell to the right. Returns the next program
@@ -149,7 +150,7 @@ where
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head = new_head;
-        Ok(self.next_pc())
+        self.next_pc()
     }
 
     /// Increment the current data cell (wraps on overflow). Returns the next
@@ -162,9 +163,9 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// assert_eq!(bfvm.cell_increment(), 1);
+    /// assert_eq!(bfvm.cell_increment().unwrap(), 1);
     /// ```
-    pub fn cell_increment(&mut self) -> usize {
+    pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_increment();
         self.next_pc()
     }
@@ -179,9 +180,9 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// assert_eq!(bfvm.cell_decrement(), 1);
+    /// assert_eq!(bfvm.cell_decrement().unwrap(), 1);
     /// ```
-    pub fn cell_decrement(&mut self) -> usize {
+    pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
         self.next_pc()
     }
@@ -208,7 +209,7 @@ where
         match reader.read(&mut buffer) {
             Ok(_) => {
                 self.cells[self.head].load_from_u8(buffer[0]);
-                Ok(self.next_pc())
+                self.next_pc()
             }
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
@@ -232,7 +233,7 @@ where
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
         let buffer = [self.cells[self.head].as_u8()];
         match writer.write(&buffer) {
-            Ok(_) => Ok(self.next_pc()),
+            Ok(_) => self.next_pc(),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
     }
@@ -243,8 +244,14 @@ where
     }
 
     /// Returns the program counter plus one
-    fn next_pc(&self) -> usize {
-        self.pc + 1
+    fn next_pc(&self) -> Result<usize, BrainfuckVMError> {
+        if self.pc >= self.program.instrs().len() - 1 {
+            Err(BrainfuckVMError::InvalidProgramCounter(
+                self.current_instr(),
+            ))
+        } else {
+            Ok(self.pc + 1)
+        }
     }
 }
 
