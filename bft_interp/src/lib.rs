@@ -110,8 +110,19 @@ where
         }
     }
 
-    /// Move the tape head one cell to the left. Returns an error if we are at
-    /// cell 0.
+    /// Move the tape head one cell to the left. Returns the next program
+    /// counter or an error if we are at cell 0.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// bfvm.move_head_right().unwrap();
+    /// bfvm.move_head_left().unwrap();
+    /// ```
     pub fn move_head_left(&mut self) -> Result<usize, BrainfuckVMError> {
         if self.head == 0 {
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
@@ -120,8 +131,18 @@ where
         Ok(self.next_pc())
     }
 
-    /// Move the tape head one cell to the right. Returns an error if we cannot
-    /// grow the tape.
+    /// Move the tape head one cell to the right. Returns the next program
+    /// counter, or an error if we cannot grow the tape.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// bfvm.move_head_right().unwrap();
+    /// ```
     pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
         let new_head = self.head + 1;
         if new_head >= self.cells.len() {
@@ -131,26 +152,61 @@ where
         Ok(self.next_pc())
     }
 
-    /// Increment the current data cell (wraps on overflow).
+    /// Increment the current data cell (wraps on overflow). Returns the next
+    /// program counter.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// assert_eq!(bfvm.cell_increment(), 1);
+    /// ```
     pub fn cell_increment(&mut self) -> usize {
         self.cells[self.head] = self.cells[self.head].wrapping_increment();
         self.next_pc()
     }
 
-    /// Decrement the current data cell (wraps on overflow).
+    /// Decrement the current data cell (wraps on overflow). Returns the next
+    /// program counter.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// assert_eq!(bfvm.cell_decrement(), 1);
+    /// ```
     pub fn cell_decrement(&mut self) -> usize {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
         self.next_pc()
     }
 
-    /// Read into the current cell, from some reader
+    /// Read into the current cell, from some reader. Returns the next program
+    /// counter, or error if the read fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::io;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut reader = io::Cursor::new(vec![42]);
+    /// bfvm.cell_read(&mut reader).unwrap();
+    /// ```
     pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
         let mut buffer = [0];
         // We can't try? reader.read(), because we don't know how to convert
         // from io::Error to BrainfuckVMError::IOError. Maybe we will learn in a
         // later lesson...
         match reader.read(&mut buffer) {
-            Ok(s) => {
+            Ok(_) => {
                 self.cells[self.head].load_from_u8(buffer[0]);
                 Ok(self.next_pc())
             }
@@ -158,11 +214,25 @@ where
         }
     }
 
-    /// Write from the current cell, to some writer
+    /// Write from the current cell, to some writer. Returns the next program
+    /// counter, or error if the write fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::io;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut buff = io::Cursor::new(vec![42]);
+    /// bfvm.cell_write(&mut buff).unwrap();
+    /// assert_eq!(buff.into_inner()[0], 0);
+    /// ```
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
         let buffer = [self.cells[self.head].as_u8()];
         match writer.write(&buffer) {
-            Ok(s) => Ok(self.next_pc()),
+            Ok(_) => Ok(self.next_pc()),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
     }
