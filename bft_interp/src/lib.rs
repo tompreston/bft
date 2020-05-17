@@ -112,33 +112,35 @@ where
 
     /// Move the tape head one cell to the left. Returns an error if we are at
     /// cell 0.
-    pub fn move_head_left(&mut self) -> Result<(), BrainfuckVMError> {
+    pub fn move_head_left(&mut self) -> Result<usize, BrainfuckVMError> {
         if self.head == 0 {
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head -= 1;
-        Ok(())
+        Ok(self.next_pc())
     }
 
     /// Move the tape head one cell to the right. Returns an error if we cannot
     /// grow the tape.
-    pub fn move_head_right(&mut self) -> Result<(), BrainfuckVMError> {
+    pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
         let new_head = self.head + 1;
         if new_head >= self.cells.len() {
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head = new_head;
-        Ok(())
+        Ok(self.next_pc())
     }
 
     /// Increment the current data cell (wraps on overflow).
-    pub fn cell_increment(&mut self) {
+    pub fn cell_increment(&mut self) -> usize {
         self.cells[self.head] = self.cells[self.head].wrapping_increment();
+        self.next_pc()
     }
 
     /// Decrement the current data cell (wraps on overflow).
-    pub fn cell_decrement(&mut self) {
+    pub fn cell_decrement(&mut self) -> usize {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
+        self.next_pc()
     }
 
     /// Read into the current cell, from some reader
@@ -150,7 +152,7 @@ where
         match reader.read(&mut buffer) {
             Ok(s) => {
                 self.cells[self.head].load_from_u8(buffer[0]);
-                Ok(s)
+                Ok(self.next_pc())
             }
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
@@ -160,7 +162,7 @@ where
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
         let buffer = [self.cells[self.head].as_u8()];
         match writer.write(&buffer) {
-            Ok(s) => Ok(s),
+            Ok(s) => Ok(self.next_pc()),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
     }
@@ -168,6 +170,11 @@ where
     /// Return the current instruction using the program-counter
     fn current_instr(&self) -> &BrainfuckInstr {
         &self.program.instrs()[self.pc]
+    }
+
+    /// Returns the program counter plus one
+    fn next_pc(&self) -> usize {
+        self.pc + 1
     }
 }
 
