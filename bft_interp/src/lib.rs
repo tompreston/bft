@@ -23,11 +23,11 @@ pub trait BrainfuckCellKind: Debug + Default + Clone {
     /// Decrement the cell (wraps on underflow).
     fn wrapping_decrement(&self) -> Self;
 
-    /// Read into cell from reader
-    fn read_from(&mut self, reader: &mut impl io::Read) -> io::Result<usize>;
+    /// Load u8 value into cell.
+    fn load_from_u8(&mut self, value: u8);
 
-    /// Write from cell to writer
-    fn write_to(&mut self, writer: &mut impl io::Write) -> io::Result<usize>;
+    /// Return u8 value from cell.
+    fn as_u8(&self) -> u8;
 }
 
 /// An implementation of the BrainfuckCellKind traits for the u8 type.
@@ -40,23 +40,12 @@ impl BrainfuckCellKind for u8 {
         self.wrapping_sub(1)
     }
 
-    // It would be nice to use ? on reader.read(), however this is not easy to
-    // do because we need to convert from io::Error, to BrainfuckCellKind.
-    // Also, I don't know if there's another way to read into a single byte.
-    fn read_from(&mut self, reader: &mut impl io::Read) -> io::Result<usize> {
-        let mut buff = [0; 1];
-        match reader.read(&mut buff) {
-            Ok(s) => {
-                *self = buff[0];
-                Ok(s)
-            }
-            Err(e) => Err(e),
-        }
+    fn load_from_u8(&mut self, value: u8) {
+        *self = value
     }
 
-    fn write_to(&mut self, writer: &mut impl io::Write) -> io::Result<usize> {
-        let mut buff = [*self; 1];
-        writer.write(&mut buff)
+    fn as_u8(&self) -> u8 {
+        *self
     }
 }
 
@@ -154,15 +143,23 @@ where
 
     /// Read into the current cell, from some reader
     pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
-        match self.cells[self.head].read_from(reader) {
-            Ok(s) => Ok(s),
+        let mut buffer = [0];
+        // We can't try? reader.read(), because we don't know how to convert
+        // from io::Error to BrainfuckVMError::IOError. Maybe we will learn in a
+        // later lesson...
+        match reader.read(&mut buffer) {
+            Ok(s) => {
+                self.cells[self.head].load_from_u8(buffer[0]);
+                Ok(s)
+            }
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
     }
 
     /// Write from the current cell, to some writer
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
-        match self.cells[self.head].write_to(writer) {
+        let buffer = [self.cells[self.head].as_u8()];
+        match writer.write(&buffer) {
             Ok(s) => Ok(s),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
