@@ -2,7 +2,7 @@
 //!
 //! This crate contains all the interpreter logic for the BrainfuckVM.
 
-use bft_types::{BrainfuckInstr, BrainfuckProg};
+use bft_types::{BrainfuckInstr, BrainfuckInstrRaw, BrainfuckProg};
 use std::default::Default;
 use std::fmt::Debug;
 use std::io;
@@ -12,6 +12,7 @@ pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
     IOError(io::Error, &'a BrainfuckInstr),
     InvalidProgramCounter(&'a BrainfuckInstr),
+    UnmatchedBracket(&'a BrainfuckInstr),
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
@@ -236,6 +237,35 @@ where
             Ok(_) => self.next_pc(),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
+    }
+
+    /// Start a while-loop. Returns the next program counter (loop-body) if data
+    /// at cell is non-zero, otherwise branches to end of while-loop.
+    pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
+        let loop_cond = self.cells[self.head].as_u8() != 0;
+        if loop_cond {
+            self.next_pc()
+        } else {
+            self.end_while_pc()
+        }
+    }
+
+    /// End a while-loop body. Branch to while_start, returns next program
+    /// counter if data at cell is non-zero, otherwise branches to end of
+    /// while-loop.
+    pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
+        self.while_start()
+    }
+
+    /// Searches for and returns the end-while program counter
+    fn end_while_pc(&self) -> Result<usize, BrainfuckVMError> {
+        let rem_prog = &self.program.instrs()[self.pc..];
+        for (i, bf_instr) in rem_prog.iter().enumerate() {
+            if *bf_instr.instr() == BrainfuckInstrRaw::RightBracket {
+                return Ok(self.pc + i);
+            }
+        }
+        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
     }
 
     /// Return the current instruction using the program-counter

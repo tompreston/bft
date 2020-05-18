@@ -85,6 +85,11 @@ impl BrainfuckInstr {
     pub fn column(&self) -> usize {
         self.column
     }
+
+    /// Returns a borrow of the raw Brainfuck instruction.
+    pub fn instr(&self) -> &BrainfuckInstrRaw {
+        &self.instr
+    }
 }
 
 impl fmt::Display for BrainfuckInstr {
