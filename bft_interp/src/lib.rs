@@ -12,7 +12,6 @@ pub enum BrainfuckVMError<'a> {
     InvalidPosition(&'a BrainfuckInstr),
     IOError(io::Error, &'a BrainfuckInstr),
     InvalidProgramCounter(&'a BrainfuckInstr),
-    UnmatchedBracket(&'a BrainfuckInstr),
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
@@ -241,7 +240,19 @@ where
 
     /// Start a while-loop. Returns the next program counter (loop-body) if data
     /// at cell is non-zero, otherwise branches to end of while-loop.
-    pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::io;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let rbracket_pc = bfvm.while_start().unwrap();
+    /// assert_eq!(rbracket_pc, 2);
+    /// ```
+    pub fn while_start(&mut self) -> Result<usize, BrainfuckVMError> {
         let loop_cond = self.cells[self.head].as_u8() != 0;
         if loop_cond {
             self.next_pc()
@@ -250,22 +261,36 @@ where
         }
     }
 
-    /// End a while-loop body. Branch to while_start, returns next program
-    /// counter if data at cell is non-zero, otherwise branches to end of
-    /// while-loop.
+    /// End a while-loop body. Returns an unconditional branch to the matching
+    /// previous left-bracket.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::io;
+    /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>".to_string());
+    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// bfvm.pc = 2;
+    /// let lbracket_pc = bfvm.while_end().unwrap();
+    /// assert_eq!(lbracket_pc, 0);
+    /// ```
     pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
-        self.while_start()
+        unimplemented!()
     }
 
-    /// Searches for and returns the end-while program counter
-    fn end_while_pc(&self) -> Result<usize, BrainfuckVMError> {
-        let rem_prog = &self.program.instrs()[self.pc..];
-        for (i, bf_instr) in rem_prog.iter().enumerate() {
-            if *bf_instr.instr() == BrainfuckInstrRaw::RightBracket {
-                return Ok(self.pc + i);
+    /// Searches for and returns the end-while program counter. Increments the
+    /// internal program counter.
+    // TODO don't do mutable and calculate a new pc
+    fn end_while_pc(&mut self) -> Result<usize, BrainfuckVMError> {
+        let instrs = self.program.instrs();
+        loop {
+            self.pc = self.next_pc()?;
+            if *instrs[self.pc].instr() == BrainfuckInstrRaw::RightBracket {
+                return Ok(self.pc);
             }
         }
-        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
     }
 
     /// Return the current instruction using the program-counter
