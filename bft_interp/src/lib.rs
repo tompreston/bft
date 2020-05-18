@@ -327,7 +327,7 @@ mod tests {
                         assert_eq!(bfvm.cells[cell_check], 0);
                     }
                 }
-                bfvm.cell_increment();
+                bfvm.cell_increment().unwrap();
             }
             // Now we expect the overflow and every cell should be 0
             for cell_check in 0..num_cells {
@@ -350,7 +350,7 @@ mod tests {
         for cell_decrement in 0..num_cells {
             // Check and decrement, until we overflow
             for i in 0..=u8::MAX {
-                bfvm.cell_decrement();
+                bfvm.cell_decrement().unwrap();
                 // Check the value of every cell.
                 // We should have already underflowed.
                 for cell_check in 0..num_cells {
