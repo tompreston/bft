@@ -8,11 +8,11 @@ use std::fmt::Debug;
 use std::io;
 
 #[derive(Debug)]
-pub enum BrainfuckVMError<'a> {
-    InvalidPosition(&'a BrainfuckInstr),
-    IOError(io::Error, &'a BrainfuckInstr),
-    InvalidProgramCounter(&'a BrainfuckInstr),
-    UnmatchedBracket(&'a BrainfuckInstr),
+pub enum BrainfuckVMError {
+    InvalidPosition(BrainfuckInstr),
+    IOError(io::Error, BrainfuckInstr),
+    InvalidProgramCounter(BrainfuckInstr),
+    UnmatchedBracket(BrainfuckInstr),
 }
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
@@ -325,8 +325,8 @@ where
     }
 
     /// Return the current instruction using the program-counter
-    fn current_instr(&self) -> &BrainfuckInstr {
-        &self.program.instrs()[self.pc]
+    fn current_instr(&self) -> BrainfuckInstr {
+        self.program.instrs()[self.pc]
     }
 
     /// Returns the program counter plus one

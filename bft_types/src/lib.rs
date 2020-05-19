@@ -7,7 +7,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 
 /// Represents the eight raw Brainfuck instructions.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BrainfuckInstrRaw {
     Plus,
     Minus,
@@ -37,7 +37,7 @@ impl BrainfuckInstrRaw {
 }
 
 /// Represents the raw Brainfuck instruction and where it is in the file.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct BrainfuckInstr {
     instr: BrainfuckInstrRaw,
     line: usize,
