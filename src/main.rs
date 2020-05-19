@@ -1,6 +1,7 @@
 use bft_interp::BrainfuckVM;
 use bft_types::BrainfuckProg;
 use std::error::Error;
+use std::io;
 
 mod cli;
 use cli::{BrainfuckOpt, StructOpt};
@@ -13,8 +14,8 @@ fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     let bf_prog = BrainfuckProg::from_file(opt.file)?;
     bf_prog.check()?;
 
-    let bf_vm: BrainfuckVM<u8> = BrainfuckVM::new(&bf_prog, num_cells, opt.extensible);
-    bf_vm.run_program();
+    let mut bf_vm: BrainfuckVM<u8> = BrainfuckVM::new(&bf_prog, num_cells, opt.extensible);
+    bf_vm.interpret(io::stdin(), io::stdout());
     Ok(())
 }
 
