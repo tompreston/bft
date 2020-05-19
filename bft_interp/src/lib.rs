@@ -107,27 +107,27 @@ where
     }
 
     /// Interpret the input Brainfuck program, and write data to output.
-    pub fn interpret<R, W>(&mut self, input: R, output: W) -> Result<(), BrainfuckVMError>
+    pub fn interpret<R, W>(&mut self, mut input: R, mut output: W) -> Result<(), BrainfuckVMError>
     where
         R: io::Read,
         W: io::Write,
     {
-        let instrs = self.program.instrs();
-        let last_instr = instrs.len() - 1;
+        let bf_instrs = self.program.instrs();
+        let last_instr = bf_instrs.len() - 1;
 
         while self.pc <= last_instr {
-            let bf_instr = &instrs[self.pc];
+            let bf_instr = &bf_instrs[self.pc];
             println!("[{}:{}] {}", bf_instr.line1(), bf_instr.column(), bf_instr);
 
             let res = match bf_instr.instr() {
-                BrainfuckInstrRaw::Plus => unimplemented!(),
-                BrainfuckInstrRaw::Minus => unimplemented!(),
-                BrainfuckInstrRaw::LessThan => unimplemented!(),
-                BrainfuckInstrRaw::GreaterThan => unimplemented!(),
-                BrainfuckInstrRaw::LeftBracket => unimplemented!(),
-                BrainfuckInstrRaw::RightBracket => unimplemented!(),
-                BrainfuckInstrRaw::Comma => unimplemented!(),
-                BrainfuckInstrRaw::Fullstop => unimplemented!(),
+                BrainfuckInstrRaw::Plus => self.cell_increment(),
+                BrainfuckInstrRaw::Minus => self.cell_decrement(),
+                BrainfuckInstrRaw::LessThan => self.move_head_left(),
+                BrainfuckInstrRaw::GreaterThan => self.move_head_right(),
+                BrainfuckInstrRaw::LeftBracket => self.while_start(),
+                BrainfuckInstrRaw::RightBracket => self.while_end(),
+                BrainfuckInstrRaw::Comma => self.cell_read(&mut input),
+                BrainfuckInstrRaw::Fullstop => self.cell_write(&mut output),
             };
 
             match res {
