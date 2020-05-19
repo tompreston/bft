@@ -307,8 +307,11 @@ where
         Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
     }
 
-    /// Searches for and returns the end-while program counter. Increments the
-    /// internal program counter.
+    /// Searches for and returns the program counter *after* the matching
+    /// end-while.
+    ///
+    /// This function does not check if this pc is valid (eg. if the end-while ]
+    /// is the last instruction, next-pc might be out-of-bounds).
     fn end_while_pc(&self) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
         let last_instr = instrs.len() - 1;
@@ -316,7 +319,8 @@ where
 
         while p <= last_instr {
             if *instrs[p].instr() == BrainfuckInstrRaw::RightBracket {
-                return Ok(p);
+                // Return the pc *after* the end-while
+                return Ok(p + 1);
             }
             p += 1;
         }
