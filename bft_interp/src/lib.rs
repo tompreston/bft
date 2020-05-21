@@ -279,14 +279,14 @@ where
     /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>".to_string());
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let rbracket_pc = bfvm.while_start().unwrap();
-    /// assert_eq!(rbracket_pc, 2);
+    /// assert_eq!(rbracket_pc, 3);
     /// ```
     pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
         let loop_cond = self.cells[self.head].as_u8() != 0;
         if loop_cond {
             self.next_pc()
         } else {
-            self.end_while_pc()
+            self.next_pc_after_end_while()
         }
     }
 
@@ -296,31 +296,47 @@ where
         let instrs = self.program.instrs();
         let first_instr = 0;
         let mut p = self.pc;
+        let mut stack = 0;
 
-        while p >= first_instr {
-            if *instrs[p].instr() == BrainfuckInstrRaw::LeftBracket {
-                return Ok(p);
-            }
+        while p > first_instr {
             p -= 1;
+            let instr = *instrs[p].instr();
+
+            if instr == BrainfuckInstrRaw::RightBracket {
+                stack += 1;
+            } else if instr == BrainfuckInstrRaw::LeftBracket {
+                if stack == 0 {
+                    return Ok(p);
+                } else {
+                    stack -= 1;
+                }
+            }
         }
 
         Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
     }
 
-    /// Searches for and returns the program counter *after* the matching
-    /// end-while.
+    /// Searches for the matching end-while and returns the subsequent program counter.
     ///
     /// This function does not check if this pc is valid (eg. if the end-while ]
     /// is the last instruction, next-pc might be out-of-bounds).
-    fn end_while_pc(&self) -> Result<usize, BrainfuckVMError> {
+    fn next_pc_after_end_while(&self) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
         let last_instr = instrs.len() - 1;
-        let mut p = self.pc;
+        let mut p = self.pc + 1;
+        let mut stack = 0;
 
         while p <= last_instr {
-            if *instrs[p].instr() == BrainfuckInstrRaw::RightBracket {
-                // Return the pc *after* the end-while
-                return Ok(p + 1);
+            let instr = *instrs[p].instr();
+
+            if instr == BrainfuckInstrRaw::LeftBracket {
+                stack += 1;
+            } else if instr == BrainfuckInstrRaw::RightBracket {
+                if stack == 0 {
+                    return Ok(p + 1);
+                } else {
+                    stack -= 1;
+                }
             }
             p += 1;
         }
@@ -500,11 +516,38 @@ mod tests {
     }
 
     #[test]
-    fn test_while_end() {
-        let prog = BrainfuckProg::new("fake/path.bf", "[>]>".to_string());
+    fn test_while_start() {
+        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]".to_string());
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+
+        bfvm.pc = 0;
+        let pc_after_rbracket = bfvm.while_start().unwrap();
+        assert_eq!(pc_after_rbracket, 3);
+
+        bfvm.pc = 4;
+        let pc_after_rbracket = bfvm.while_start().unwrap();
+        assert_eq!(pc_after_rbracket, 11);
+
+        bfvm.pc = 6;
+        let pc_after_rbracket = bfvm.while_start().unwrap();
+        assert_eq!(pc_after_rbracket, 9);
+    }
+
+    #[test]
+    fn test_while_end() {
+        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]".to_string());
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+
         bfvm.pc = 2;
         let lbracket_pc = bfvm.while_end().unwrap();
         assert_eq!(lbracket_pc, 0);
+
+        bfvm.pc = 8;
+        let lbracket_pc = bfvm.while_end().unwrap();
+        assert_eq!(lbracket_pc, 6);
+
+        bfvm.pc = 10;
+        let lbracket_pc = bfvm.while_end().unwrap();
+        assert_eq!(lbracket_pc, 4);
     }
 }
