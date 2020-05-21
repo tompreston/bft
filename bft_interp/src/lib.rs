@@ -117,7 +117,6 @@ where
 
         while self.pc <= last_instr {
             let bf_instr = &bf_instrs[self.pc];
-            println!("[{}:{}] {}", bf_instr.line1(), bf_instr.column(), bf_instr);
 
             let res = match bf_instr.instr() {
                 BrainfuckInstrRaw::Plus => self.cell_increment(),
