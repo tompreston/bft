@@ -4,10 +4,11 @@
 
 use bft_types::{BrainfuckInstr, BrainfuckInstrRaw, BrainfuckProg};
 use std::default::Default;
-use std::fmt::Debug;
+use std::error::Error;
+use std::fmt;
 use std::io;
 
-#[derive(Debug)]
+#[derive(fmt::Debug)]
 pub enum BrainfuckVMError {
     InvalidPosition(BrainfuckInstr),
     IOError(io::Error, BrainfuckInstr),
@@ -15,10 +16,18 @@ pub enum BrainfuckVMError {
     UnmatchedBracket(BrainfuckInstr),
 }
 
+impl fmt::Display for BrainfuckVMError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Error for BrainfuckVMError {}
+
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
 /// Implementations of this trait must also implement the supertraits:
 /// Debug, Default and Clone
-pub trait BrainfuckCellKind: Debug + Default + Clone {
+pub trait BrainfuckCellKind: fmt::Debug + Default + Clone {
     /// Increment the cell (wraps on overflow).
     fn wrapping_increment(&self) -> Self;
 
@@ -55,7 +64,7 @@ impl BrainfuckCellKind for u8 {
 ///
 /// The Brainfuck Virtual Machine interperets and runs BrainfuckProg programs.
 /// The type T specifies what type the BrainfuckVM data cells are.
-#[derive(Debug)]
+#[derive(fmt::Debug)]
 pub struct BrainfuckVM<'a, T> {
     /// Data cells in the Brainfuck Virtual Machine.
     cells: Vec<T>,
@@ -157,7 +166,7 @@ where
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head -= 1;
-        self.next_pc()
+        Ok(self.pc + 1)
     }
 
     /// Move the tape head one cell to the right. Returns the next program
@@ -178,7 +187,7 @@ where
             return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
         }
         self.head = new_head;
-        self.next_pc()
+        Ok(self.pc + 1)
     }
 
     /// Increment the current data cell (wraps on overflow). Returns the next
@@ -195,7 +204,7 @@ where
     /// ```
     pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_increment();
-        self.next_pc()
+        Ok(self.pc + 1)
     }
 
     /// Decrement the current data cell (wraps on overflow). Returns the next
@@ -212,7 +221,7 @@ where
     /// ```
     pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
-        self.next_pc()
+        Ok(self.pc + 1)
     }
 
     /// Read into the current cell, from some reader. Returns the next program
@@ -237,7 +246,7 @@ where
         match reader.read(&mut buffer) {
             Ok(_) => {
                 self.cells[self.head].load_from_u8(buffer[0]);
-                self.next_pc()
+                Ok(self.pc + 1)
             }
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
@@ -261,7 +270,7 @@ where
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
         let buffer = [self.cells[self.head].as_u8()];
         match writer.write(&buffer) {
-            Ok(_) => self.next_pc(),
+            Ok(_) => Ok(self.pc + 1),
             Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
         }
     }
@@ -283,7 +292,7 @@ where
     pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
         let loop_cond = self.cells[self.head].as_u8() != 0;
         if loop_cond {
-            self.next_pc()
+            Ok(self.pc + 1)
         } else {
             let pc = self.matching_rbracket(self.pc)?;
             Ok(pc + 1)
@@ -337,17 +346,6 @@ where
     /// Return the current instruction using the program-counter
     fn current_instr(&self) -> BrainfuckInstr {
         self.program.instrs()[self.pc]
-    }
-
-    /// Returns the program counter plus one
-    fn next_pc(&self) -> Result<usize, BrainfuckVMError> {
-        if self.pc >= self.program.instrs().len() - 1 {
-            Err(BrainfuckVMError::InvalidProgramCounter(
-                self.current_instr(),
-            ))
-        } else {
-            Ok(self.pc + 1)
-        }
     }
 }
 

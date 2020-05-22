@@ -15,7 +15,7 @@ fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     bf_prog.check()?;
 
     let mut bf_vm: BrainfuckVM<u8> = BrainfuckVM::new(&bf_prog, num_cells, opt.extensible);
-    bf_vm.interpret(io::stdin(), io::stdout());
+    bf_vm.interpret(io::stdin(), io::stdout())?;
     Ok(())
 }
 
