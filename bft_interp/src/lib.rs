@@ -285,7 +285,7 @@ where
         if loop_cond {
             self.next_pc()
         } else {
-            let pc = self.matching_right_bracket()?;
+            let pc = self.matching_rbracket(self.pc)?;
             Ok(pc + 1)
         }
     }
@@ -293,55 +293,41 @@ where
     /// End a while-loop body. Returns an unconditional branch to the matching
     /// previous left-bracket.
     pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
-        self.matching_left_bracket()
+        self.matching_lbracket(self.pc)
     }
 
-    /// Searches for the next matching right-bracket and returns its pc.
-    /// Returns an error if no matching bracket is found (unmatched).
-    fn matching_right_bracket(&self) -> Result<usize, BrainfuckVMError> {
+    /// From the provided left-bracket, search for the next matching right-bracket
+    /// and return its pc.  Returns an error if no matching bracket is found.
+    fn matching_rbracket(&self, pc_lbracket: usize) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
-        let last_instr = instrs.len() - 1;
-        let mut p = self.pc + 1;
-        let mut stack = 0;
+        let pc_last = instrs.len() - 1;
+        let mut pc = pc_lbracket;
 
-        while p <= last_instr {
-            let instr = *instrs[p].instr();
-
-            if instr == BrainfuckInstrRaw::LeftBracket {
-                stack += 1;
-            } else if instr == BrainfuckInstrRaw::RightBracket {
-                if stack == 0 {
-                    return Ok(p);
-                } else {
-                    stack -= 1;
-                }
-            }
-            p += 1;
+        while pc < pc_last {
+            pc += 1;
+            match *instrs[pc].instr() {
+                BrainfuckInstrRaw::LeftBracket => pc = self.matching_rbracket(pc)?,
+                BrainfuckInstrRaw::RightBracket => return Ok(pc),
+                _ => (),
+            };
         }
 
         Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
     }
 
-    /// Searches for the previous matching left-bracket and returns its pc.
-    /// Returns an error if no matching bracket is found (unmatched).
-    fn matching_left_bracket(&self) -> Result<usize, BrainfuckVMError> {
+    /// From the provided right-bracket, search for the next matching left-bracket
+    /// and return its pc.  Returns an error if no matching bracket is found.
+    fn matching_lbracket(&self, pc_rbracket: usize) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
-        let first_instr = 0;
-        let mut p = self.pc;
-        let mut stack = 0;
+        let pc_first = 0;
+        let mut pc = pc_rbracket;
 
-        while p > first_instr {
-            p -= 1;
-            let instr = *instrs[p].instr();
-
-            if instr == BrainfuckInstrRaw::RightBracket {
-                stack += 1;
-            } else if instr == BrainfuckInstrRaw::LeftBracket {
-                if stack == 0 {
-                    return Ok(p);
-                } else {
-                    stack -= 1;
-                }
+        while pc > pc_first {
+            pc -= 1;
+            match *instrs[pc].instr() {
+                BrainfuckInstrRaw::RightBracket => pc = self.matching_lbracket(pc)?,
+                BrainfuckInstrRaw::LeftBracket => return Ok(pc),
+                _ => (),
             }
         }
 
