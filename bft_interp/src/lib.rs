@@ -285,13 +285,46 @@ where
         if loop_cond {
             self.next_pc()
         } else {
-            self.next_pc_after_end_while()
+            let pc = self.matching_right_bracket()?;
+            Ok(pc + 1)
         }
     }
 
     /// End a while-loop body. Returns an unconditional branch to the matching
     /// previous left-bracket.
     pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
+        self.matching_left_bracket()
+    }
+
+    /// Searches for the next matching right-bracket and returns its pc.
+    /// Returns an error if no matching bracket is found (unmatched).
+    fn matching_right_bracket(&self) -> Result<usize, BrainfuckVMError> {
+        let instrs = self.program.instrs();
+        let last_instr = instrs.len() - 1;
+        let mut p = self.pc + 1;
+        let mut stack = 0;
+
+        while p <= last_instr {
+            let instr = *instrs[p].instr();
+
+            if instr == BrainfuckInstrRaw::LeftBracket {
+                stack += 1;
+            } else if instr == BrainfuckInstrRaw::RightBracket {
+                if stack == 0 {
+                    return Ok(p);
+                } else {
+                    stack -= 1;
+                }
+            }
+            p += 1;
+        }
+
+        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
+    }
+
+    /// Searches for the previous matching left-bracket and returns its pc.
+    /// Returns an error if no matching bracket is found (unmatched).
+    fn matching_left_bracket(&self) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
         let first_instr = 0;
         let mut p = self.pc;
@@ -310,34 +343,6 @@ where
                     stack -= 1;
                 }
             }
-        }
-
-        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
-    }
-
-    /// Searches for the matching end-while and returns the subsequent program counter.
-    ///
-    /// This function does not check if this pc is valid (eg. if the end-while ]
-    /// is the last instruction, next-pc might be out-of-bounds).
-    fn next_pc_after_end_while(&self) -> Result<usize, BrainfuckVMError> {
-        let instrs = self.program.instrs();
-        let last_instr = instrs.len() - 1;
-        let mut p = self.pc + 1;
-        let mut stack = 0;
-
-        while p <= last_instr {
-            let instr = *instrs[p].instr();
-
-            if instr == BrainfuckInstrRaw::LeftBracket {
-                stack += 1;
-            } else if instr == BrainfuckInstrRaw::RightBracket {
-                if stack == 0 {
-                    return Ok(p + 1);
-                } else {
-                    stack -= 1;
-                }
-            }
-            p += 1;
         }
 
         Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
