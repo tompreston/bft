@@ -45,12 +45,12 @@ pub struct BrainfuckInstr {
 }
 
 impl BrainfuckInstr {
-    /// Returns a vector of BrainfuckInstr's, parsed from the given String.
+    /// Returns a vector of BrainfuckInstr's, parsed from the given string slice.
     ///
     /// # Example
     /// ```
     /// # use bft_types::{BrainfuckInstr, BrainfuckInstrRaw};
-    /// let bf = BrainfuckInstr::from_string("<>".to_string());
+    /// let bf = BrainfuckInstr::from_str("<>");
     ///
     /// assert_eq!(bf[0].line1(), 1);
     /// assert_eq!(bf[0].column(), 0);
@@ -58,7 +58,7 @@ impl BrainfuckInstr {
     /// assert_eq!(bf[1].line1(), 1);
     /// assert_eq!(bf[1].column(), 1);
     /// ```
-    pub fn from_string(s: String) -> Vec<Self> {
+    pub fn from_str(s: &str) -> Vec<Self> {
         let mut instrs: Vec<BrainfuckInstr> = Vec::new();
 
         for (l, pline) in s.lines().enumerate() {
@@ -120,10 +120,10 @@ pub struct BrainfuckProg {
 }
 
 impl BrainfuckProg {
-    pub fn new<P: AsRef<Path>>(path: P, content: String) -> Self {
+    pub fn new<P: AsRef<Path>>(path: P, content: &str) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
-            instrs: BrainfuckInstr::from_string(content),
+            instrs: BrainfuckInstr::from_str(content),
         }
     }
 
@@ -138,7 +138,7 @@ impl BrainfuckProg {
     /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
         let content = std::fs::read_to_string(&path)?;
-        Ok(Self::new(path, content))
+        Ok(Self::new(path, content.as_str()))
     }
 
     /// Returns a reference to the BrainfuckProg's path.
@@ -167,20 +167,20 @@ impl BrainfuckProg {
             } else if bf_instr.instr == BrainfuckInstrRaw::RightBracket {
                 match left_brackets.pop() {
                     Some(_) => (),
-                    None => return Err(self.error_msg(bf_instr, "Unmatched ]".to_string())),
+                    None => return Err(self.error_msg(bf_instr, "Unmatched ]")),
                 };
             }
         }
 
         // Error if there are remaining unmatched left_brackets
         match left_brackets.iter().last() {
-            Some(v) => Err(self.error_msg(v, "Unmatched [".to_string())),
+            Some(v) => Err(self.error_msg(v, "Unmatched [")),
             None => Ok(()),
         }
     }
 
     /// Returns a nicely formatted error message.
-    fn error_msg(&self, instr: &BrainfuckInstr, msg: String) -> String {
+    fn error_msg(&self, instr: &BrainfuckInstr, msg: &str) -> String {
         let path_str = self.path().to_string_lossy().into_owned();
         format!("{}:{}:{}: {}", path_str, instr.line1(), instr.column(), msg)
     }
@@ -215,7 +215,7 @@ mod tests {
         let another_path = "path/to/somewhere/else.bf";
 
         // Construct
-        let b = BrainfuckProg::new(fake_path, "<>[]-+,.".to_string());
+        let b = BrainfuckProg::new(fake_path, "<>[]-+,.");
 
         // Check the path is stored correctly
         assert_eq!(Path::new(fake_path), b.path.as_path());
@@ -240,8 +240,7 @@ mod tests {
     fn test_program_with_comments() {
         let prog_str = "this < is > a [ valid ]\n\
             brainfuck - program +\n\
-            these , are . comments"
-            .to_string();
+            these , are . comments";
         let correct_pos = [
             Position { line: 0, column: 5 },
             Position {
@@ -284,7 +283,7 @@ mod tests {
     #[test]
     fn test_program_with_matched_brackets() {
         let fake_path = "path/to/file.bf";
-        let b = BrainfuckProg::new(fake_path, "<>[[[]-]+],.".to_string());
+        let b = BrainfuckProg::new(fake_path, "<>[[[]-]+],.");
         b.check().unwrap();
     }
 
@@ -292,9 +291,9 @@ mod tests {
     #[should_panic]
     fn test_program_with_unmatched_brackets() {
         let fake_path = "path/to/file.bf";
-        let b1 = BrainfuckProg::new(fake_path, "<>[[]-+,.".to_string());
+        let b1 = BrainfuckProg::new(fake_path, "<>[[]-+,.");
         b1.check().unwrap();
-        let b2 = BrainfuckProg::new(fake_path, "<>[[]]]-+,.".to_string());
+        let b2 = BrainfuckProg::new(fake_path, "<>[[]]]-+,.");
         b2.check().unwrap();
     }
 

@@ -101,7 +101,7 @@ where
     /// ```
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// ```
     pub fn new(program: &'a BrainfuckProg, num_cells: usize, is_growable: bool) -> Self {
@@ -157,7 +157,7 @@ where
     /// ```
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// bfvm.move_head_right().unwrap();
     /// bfvm.move_head_left().unwrap();
@@ -178,7 +178,7 @@ where
     /// ```
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// bfvm.move_head_right().unwrap();
     /// ```
@@ -199,7 +199,7 @@ where
     /// ```
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// assert_eq!(bfvm.cell_increment().unwrap(), 1);
     /// ```
@@ -216,7 +216,7 @@ where
     /// ```
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// assert_eq!(bfvm.cell_decrement().unwrap(), 1);
     /// ```
@@ -234,7 +234,7 @@ where
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let mut reader = io::Cursor::new(vec![42]);
     /// bfvm.cell_read(&mut reader).unwrap();
@@ -262,7 +262,7 @@ where
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let mut buff = io::Cursor::new(vec![42]);
     /// bfvm.cell_write(&mut buff).unwrap();
@@ -286,7 +286,7 @@ where
     /// # use bft_interp::BrainfuckVM;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
-    /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>".to_string());
+    /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let rbracket_pc = bfvm.while_start().unwrap();
     /// assert_eq!(rbracket_pc, 3);
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_init() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
         assert_eq!(bfvm.cells.len(), 30_000);
 
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_move_head_left() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
         bfvm.move_head_right().unwrap();
         bfvm.move_head_left().unwrap();
@@ -382,7 +382,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_brainfuckvm_move_head_left_before_zero() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
         bfvm.move_head_right().unwrap();
         bfvm.move_head_left().unwrap();
@@ -391,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_move_head_right() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
         bfvm.move_head_right().unwrap();
     }
@@ -399,7 +399,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_brainfuckvm_move_head_right_after_max_not_growable() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
         bfvm.move_head_right().unwrap();
         bfvm.move_head_right().unwrap();
@@ -407,7 +407,7 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_cell_increment() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
 
@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn test_brainfuckvm_cell_decrement() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
 
@@ -466,7 +466,7 @@ mod tests {
 
     #[test]
     fn test_cell_read_u8() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
 
@@ -488,7 +488,7 @@ mod tests {
 
     #[test]
     fn test_cell_write_u8() {
-        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.".to_string());
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
 
@@ -507,7 +507,7 @@ mod tests {
 
     #[test]
     fn test_while_start() {
-        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]".to_string());
+        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
 
         bfvm.pc = 0;
@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_while_end() {
-        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]".to_string());
+        let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
 
         bfvm.pc = 2;
