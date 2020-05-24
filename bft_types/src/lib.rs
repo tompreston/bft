@@ -108,10 +108,14 @@ impl fmt::Display for BrainfuckInstr {
     }
 }
 
-/// Represents an entire Brainfuck program: a Path and a series of instructions.
+/// Represents an entire Brainfuck program, which is a Path and a series of
+/// instructions.
 #[derive(Debug)]
 pub struct BrainfuckProg {
+    /// The path to the Brainfuck program.
     path: PathBuf,
+
+    /// A series of BrainfuckInstr.
     instrs: Vec<BrainfuckInstr>,
 }
 

@@ -1,3 +1,4 @@
+//! A Brainfuck Interpreter written in Rust!
 use bft_interp::BrainfuckVM;
 use bft_types::BrainfuckProg;
 use std::error::Error;
@@ -43,6 +44,7 @@ impl<T> Drop for TidyWriter<T> {
     }
 }
 
+/// Run the Brainfuck Interpreter.
 fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     let num_cells = match opt.cells {
         Some(n) => n,
@@ -60,6 +62,7 @@ fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Parse the arguments, run the program and return sensible errors.
 fn main() {
     let opt = BrainfuckOpt::from_args();
     std::process::exit(match run_bft(opt) {

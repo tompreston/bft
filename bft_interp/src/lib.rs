@@ -8,6 +8,7 @@ use std::error::Error;
 use std::fmt;
 use std::io;
 
+/// Represents a Brainfuck Virtual Machine Error.
 #[derive(fmt::Debug)]
 pub enum BrainfuckVMError {
     InvalidPosition(BrainfuckInstr),
@@ -276,7 +277,8 @@ where
     }
 
     /// Start a while-loop. Returns the next program counter (loop-body) if data
-    /// at cell is non-zero, otherwise branches to end of while-loop.
+    /// at cell is non-zero, otherwise returns the program counter after the
+    /// matching right-bracket.
     ///
     /// # Example
     ///
@@ -300,7 +302,7 @@ where
     }
 
     /// End a while-loop body. Returns an unconditional branch to the matching
-    /// previous left-bracket.
+    /// left-bracket.
     pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
         self.matching_lbracket(self.pc)
     }

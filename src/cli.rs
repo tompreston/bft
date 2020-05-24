@@ -1,3 +1,4 @@
+//! The bft interpreter command line interface (CLI).
 use std::path::PathBuf;
 pub use structopt::StructOpt;
 
