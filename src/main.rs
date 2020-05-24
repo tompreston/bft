@@ -22,9 +22,8 @@ where
 {
     /// Proxy write command which tracks the last byte.
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        match buf.last() {
-            Some(l) => self.last_u8 = *l,
-            None => (),
+        if let Some(l) = buf.last() {
+            self.last_u8 = *l;
         }
         self.writer.write(buf)
     }
