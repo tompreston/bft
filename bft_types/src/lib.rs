@@ -50,7 +50,7 @@ impl BrainfuckInstr {
     /// # Example
     /// ```
     /// # use bft_types::{BrainfuckInstr, BrainfuckInstrRaw};
-    /// let bf = BrainfuckInstr::from_str("<>");
+    /// let bf = BrainfuckInstr::instrs_from_str("<>");
     ///
     /// assert_eq!(bf[0].line1(), 1);
     /// assert_eq!(bf[0].column(), 0);
@@ -58,7 +58,7 @@ impl BrainfuckInstr {
     /// assert_eq!(bf[1].line1(), 1);
     /// assert_eq!(bf[1].column(), 1);
     /// ```
-    pub fn from_str(s: &str) -> Vec<Self> {
+    pub fn instrs_from_str(s: &str) -> Vec<Self> {
         let mut instrs: Vec<BrainfuckInstr> = Vec::new();
 
         for (l, pline) in s.lines().enumerate() {
@@ -123,7 +123,7 @@ impl BrainfuckProg {
     pub fn new<P: AsRef<Path>>(path: P, content: &str) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
-            instrs: BrainfuckInstr::from_str(content),
+            instrs: BrainfuckInstr::instrs_from_str(content),
         }
     }
 
