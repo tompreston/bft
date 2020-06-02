@@ -185,7 +185,13 @@ where
     pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
         let new_head = self.head + 1;
         if new_head >= self.cells.len() {
-            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
+            if self.is_growable {
+                // Add another cell and let Rust decide how to grow the Vector
+                self.cells.push(Default::default());
+                return self.move_head_right();
+            } else {
+                return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
+            }
         }
         self.head = new_head;
         Ok(self.pc + 1)
@@ -403,6 +409,15 @@ mod tests {
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
         bfvm.move_head_right().unwrap();
         bfvm.move_head_right().unwrap();
+    }
+
+    #[test]
+    fn test_brainfuckvm_move_head_right_after_max_growable() {
+        let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
+        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, true);
+        for _ in 1..9001 {
+            bfvm.move_head_right().unwrap();
+        }
     }
 
     #[test]
