@@ -52,11 +52,11 @@ impl BrainfuckInstr {
     /// # use bft_types::{BrainfuckInstr, BrainfuckInstrRaw};
     /// let bf = BrainfuckInstr::instrs_from_str("<>");
     ///
-    /// assert_eq!(bf[0].line1(), 1);
-    /// assert_eq!(bf[0].column(), 0);
+    /// assert_eq!(bf[0].line(), 1);
+    /// assert_eq!(bf[0].column(), 1);
     ///
-    /// assert_eq!(bf[1].line1(), 1);
-    /// assert_eq!(bf[1].column(), 1);
+    /// assert_eq!(bf[1].line(), 1);
+    /// assert_eq!(bf[1].column(), 2);
     /// ```
     pub fn instrs_from_str(s: &str) -> Vec<Self> {
         let mut instrs: Vec<BrainfuckInstr> = Vec::new();
@@ -66,8 +66,8 @@ impl BrainfuckInstr {
                 if let Some(iraw) = BrainfuckInstrRaw::from_byte(pbyte) {
                     instrs.push(BrainfuckInstr {
                         instr: iraw,
-                        line: l,
-                        column: c,
+                        line: l + 1,
+                        column: c + 1,
                     });
                 }
             }
@@ -76,9 +76,9 @@ impl BrainfuckInstr {
         instrs
     }
 
-    /// Returns the Brainfuck instruction line number, starting at 1
-    pub fn line1(&self) -> usize {
-        self.line + 1
+    /// Returns the Brainfuck instruction line number
+    pub fn line(&self) -> usize {
+        self.line
     }
 
     /// Returns the Brainfuck instruction column
@@ -182,7 +182,7 @@ impl BrainfuckProg {
     /// Returns a nicely formatted error message.
     fn error_msg(&self, instr: &BrainfuckInstr, msg: &str) -> String {
         let path_str = self.path().to_string_lossy().into_owned();
-        format!("{}:{}:{}: {}", path_str, instr.line1(), instr.column(), msg)
+        format!("{}:{}:{}: {}", path_str, instr.line(), instr.column(), msg)
     }
 }
 
@@ -226,8 +226,8 @@ mod tests {
 
         for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
             assert_eq!(p[i].instr, *cinstr);
-            assert_eq!(p[i].line1(), 1);
-            assert_eq!(p[i].column(), i);
+            assert_eq!(p[i].line(), 1);
+            assert_eq!(p[i].column(), i + 1);
         }
 
         // Check the program backwards (verify BrainfuckInstrRaw PartialEq)
@@ -242,31 +242,31 @@ mod tests {
             brainfuck - program +\n\
             these , are . comments";
         let correct_pos = [
-            Position { line: 0, column: 5 },
+            Position { line: 1, column: 6 },
             Position {
-                line: 0,
-                column: 10,
-            },
-            Position {
-                line: 0,
-                column: 14,
-            },
-            Position {
-                line: 0,
-                column: 22,
+                line: 1,
+                column: 11,
             },
             Position {
                 line: 1,
-                column: 10,
+                column: 15,
             },
             Position {
                 line: 1,
-                column: 20,
+                column: 23,
             },
-            Position { line: 2, column: 6 },
             Position {
                 line: 2,
-                column: 12,
+                column: 11,
+            },
+            Position {
+                line: 2,
+                column: 21,
+            },
+            Position { line: 3, column: 7 },
+            Position {
+                line: 3,
+                column: 13,
             },
         ];
         let b = BrainfuckProg::new("path/to/file.bf", prog_str);
@@ -275,7 +275,7 @@ mod tests {
         let p = b.instrs();
         for (i, cinstr) in CORRECT_INSTRS.iter().enumerate() {
             assert_eq!(p[i].instr, *cinstr);
-            assert_eq!(p[i].line1(), correct_pos[i].line + 1);
+            assert_eq!(p[i].line(), correct_pos[i].line);
             assert_eq!(p[i].column(), correct_pos[i].column);
         }
     }
