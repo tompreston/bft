@@ -9,28 +9,28 @@ use std::path::{Path, PathBuf};
 /// Represents the eight raw Brainfuck instructions.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BrainfuckInstrRaw {
-    Plus,
-    Minus,
-    LessThan,
-    GreaterThan,
-    LeftBracket,
-    RightBracket,
-    Comma,
-    Fullstop,
+    Increment,
+    Decrement,
+    MoveHeadLeft,
+    MoveHeadRight,
+    WhileStart,
+    WhileEnd,
+    CellRead,
+    CellWrite,
 }
 
 impl BrainfuckInstrRaw {
     /// Returns a BrainfuckInstrRaw from the given character.
     fn from_byte(c: u8) -> Option<BrainfuckInstrRaw> {
         match c {
-            b'+' => Some(BrainfuckInstrRaw::Plus),
-            b'-' => Some(BrainfuckInstrRaw::Minus),
-            b'<' => Some(BrainfuckInstrRaw::LessThan),
-            b'>' => Some(BrainfuckInstrRaw::GreaterThan),
-            b'[' => Some(BrainfuckInstrRaw::LeftBracket),
-            b']' => Some(BrainfuckInstrRaw::RightBracket),
-            b',' => Some(BrainfuckInstrRaw::Comma),
-            b'.' => Some(BrainfuckInstrRaw::Fullstop),
+            b'+' => Some(BrainfuckInstrRaw::Increment),
+            b'-' => Some(BrainfuckInstrRaw::Decrement),
+            b'<' => Some(BrainfuckInstrRaw::MoveHeadLeft),
+            b'>' => Some(BrainfuckInstrRaw::MoveHeadRight),
+            b'[' => Some(BrainfuckInstrRaw::WhileStart),
+            b']' => Some(BrainfuckInstrRaw::WhileEnd),
+            b',' => Some(BrainfuckInstrRaw::CellRead),
+            b'.' => Some(BrainfuckInstrRaw::CellWrite),
             _ => None,
         }
     }
@@ -95,14 +95,14 @@ impl BrainfuckInstr {
 impl fmt::Display for BrainfuckInstr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self.instr {
-            BrainfuckInstrRaw::Plus => "Increment byte at data pointer",
-            BrainfuckInstrRaw::Minus => "Decrement byte at data pointer",
-            BrainfuckInstrRaw::LessThan => "Decrement data pointer",
-            BrainfuckInstrRaw::GreaterThan => "Increment data pointer",
-            BrainfuckInstrRaw::LeftBracket => "Start looping",
-            BrainfuckInstrRaw::RightBracket => "End looping",
-            BrainfuckInstrRaw::Comma => "Input byte at the data pointer",
-            BrainfuckInstrRaw::Fullstop => "Output byte at data pointer",
+            BrainfuckInstrRaw::Increment => "Increment byte at data pointer",
+            BrainfuckInstrRaw::Decrement => "Decrement byte at data pointer",
+            BrainfuckInstrRaw::MoveHeadLeft => "Decrement data pointer",
+            BrainfuckInstrRaw::MoveHeadRight => "Increment data pointer",
+            BrainfuckInstrRaw::WhileStart => "Start looping",
+            BrainfuckInstrRaw::WhileEnd => "End looping",
+            BrainfuckInstrRaw::CellRead => "Input byte at the data pointer",
+            BrainfuckInstrRaw::CellWrite => "Output byte at data pointer",
         };
         write!(f, "{}", text)
     }
@@ -162,9 +162,9 @@ impl BrainfuckProg {
 
         // Collect left brackets and pop when we find matching right brackets.
         for bf_instr in &self.instrs {
-            if bf_instr.instr == BrainfuckInstrRaw::LeftBracket {
+            if bf_instr.instr == BrainfuckInstrRaw::WhileStart {
                 left_brackets.push(&bf_instr);
-            } else if bf_instr.instr == BrainfuckInstrRaw::RightBracket {
+            } else if bf_instr.instr == BrainfuckInstrRaw::WhileEnd {
                 match left_brackets.pop() {
                     Some(_) => (),
                     None => return Err(self.error_msg(bf_instr, "Unmatched ]")),
@@ -199,14 +199,14 @@ mod tests {
 
     // Some default sequence, which we can test against.
     const CORRECT_INSTRS: [BrainfuckInstrRaw; 8] = [
-        BrainfuckInstrRaw::LessThan,
-        BrainfuckInstrRaw::GreaterThan,
-        BrainfuckInstrRaw::LeftBracket,
-        BrainfuckInstrRaw::RightBracket,
-        BrainfuckInstrRaw::Minus,
-        BrainfuckInstrRaw::Plus,
-        BrainfuckInstrRaw::Comma,
-        BrainfuckInstrRaw::Fullstop,
+        BrainfuckInstrRaw::MoveHeadLeft,
+        BrainfuckInstrRaw::MoveHeadRight,
+        BrainfuckInstrRaw::WhileStart,
+        BrainfuckInstrRaw::WhileEnd,
+        BrainfuckInstrRaw::Decrement,
+        BrainfuckInstrRaw::Increment,
+        BrainfuckInstrRaw::CellRead,
+        BrainfuckInstrRaw::CellWrite,
     ];
 
     #[test]

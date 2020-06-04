@@ -129,14 +129,14 @@ where
             let bf_instr = &bf_instrs[self.pc];
 
             let res = match bf_instr.instr() {
-                BrainfuckInstrRaw::Plus => self.cell_increment(),
-                BrainfuckInstrRaw::Minus => self.cell_decrement(),
-                BrainfuckInstrRaw::LessThan => self.move_head_left(),
-                BrainfuckInstrRaw::GreaterThan => self.move_head_right(),
-                BrainfuckInstrRaw::LeftBracket => self.while_start(),
-                BrainfuckInstrRaw::RightBracket => self.while_end(),
-                BrainfuckInstrRaw::Comma => self.cell_read(&mut input),
-                BrainfuckInstrRaw::Fullstop => self.cell_write(&mut output),
+                BrainfuckInstrRaw::Increment => self.cell_increment(),
+                BrainfuckInstrRaw::Decrement => self.cell_decrement(),
+                BrainfuckInstrRaw::MoveHeadLeft => self.move_head_left(),
+                BrainfuckInstrRaw::MoveHeadRight => self.move_head_right(),
+                BrainfuckInstrRaw::WhileStart => self.while_start(),
+                BrainfuckInstrRaw::WhileEnd => self.while_end(),
+                BrainfuckInstrRaw::CellRead => self.cell_read(&mut input),
+                BrainfuckInstrRaw::CellWrite => self.cell_write(&mut output),
             };
 
             match res {
@@ -323,8 +323,8 @@ where
         while pc < pc_last {
             pc += 1;
             match *instrs[pc].instr() {
-                BrainfuckInstrRaw::LeftBracket => pc = self.matching_rbracket(pc)?,
-                BrainfuckInstrRaw::RightBracket => return Ok(pc),
+                BrainfuckInstrRaw::WhileStart => pc = self.matching_rbracket(pc)?,
+                BrainfuckInstrRaw::WhileEnd => return Ok(pc),
                 _ => (),
             };
         }
@@ -342,8 +342,8 @@ where
         while pc > pc_first {
             pc -= 1;
             match *instrs[pc].instr() {
-                BrainfuckInstrRaw::RightBracket => pc = self.matching_lbracket(pc)?,
-                BrainfuckInstrRaw::LeftBracket => return Ok(pc),
+                BrainfuckInstrRaw::WhileEnd => pc = self.matching_lbracket(pc)?,
+                BrainfuckInstrRaw::WhileStart => return Ok(pc),
                 _ => (),
             }
         }
