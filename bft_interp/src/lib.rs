@@ -2,28 +2,30 @@
 //!
 //! This crate contains all the interpreter logic for the BrainfuckVM.
 
+//#![deny(missing_docs)]
+
 use bft_types::{BrainfuckInstr, BrainfuckInstrRaw, BrainfuckProg};
 use std::default::Default;
-use std::error::Error;
 use std::fmt;
 use std::io;
 
+use thiserror::Error;
+
 /// Represents a Brainfuck Virtual Machine Error.
-#[derive(fmt::Debug)]
+#[derive(Error, fmt::Debug)]
 pub enum BrainfuckVMError {
+    #[error("invalid position for data head, instr {0}")]
     InvalidPosition(BrainfuckInstr),
-    IOError(io::Error, BrainfuckInstr),
+
+    #[error("IO error occured, instr {0}, {0}")]
+    IOError(BrainfuckInstr, io::Error),
+
+    #[error("invalid program counter, instr {0}")]
     InvalidProgramCounter(BrainfuckInstr),
+
+    #[error("unmatched bracket, instr {0}")]
     UnmatchedBracket(BrainfuckInstr),
 }
-
-impl fmt::Display for BrainfuckVMError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl Error for BrainfuckVMError {}
 
 /// Describes the traits we expect the Brainfuck VW generic cell-type to have.
 /// Implementations of this trait must also implement the supertraits:
@@ -255,7 +257,7 @@ where
                 self.cells[self.head].load_from_u8(buffer[0]);
                 Ok(self.pc + 1)
             }
-            Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
+            Err(e) => Err(BrainfuckVMError::IOError(self.current_instr(), e)),
         }
     }
 
@@ -278,7 +280,7 @@ where
         let buffer = [self.cells[self.head].as_u8()];
         match writer.write(&buffer) {
             Ok(_) => Ok(self.pc + 1),
-            Err(e) => Err(BrainfuckVMError::IOError(e, self.current_instr())),
+            Err(e) => Err(BrainfuckVMError::IOError(self.current_instr(), e)),
         }
     }
 

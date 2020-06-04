@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 bft_types = { path = "../bft_types" }
+thiserror = "1.0"

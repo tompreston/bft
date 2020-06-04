@@ -3,19 +3,40 @@
 //! This crate contains all the data types necessary for the Brainfuck
 //! interpreter project.
 
+#![deny(missing_docs)]
+
 use std::fmt;
 use std::path::{Path, PathBuf};
 
 /// Represents the eight raw Brainfuck instructions.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BrainfuckInstrRaw {
+    /// Increment (increase by one) the byte at the data pointer
     Increment,
+
+    /// Decrement (decrease by one) the byte at the data pointer
     Decrement,
+
+    /// Increment the data pointer (to point to the next cell to the right)
     MoveHeadLeft,
+
+    /// Decrement the data pointer (to point to the next cell to the left)
     MoveHeadRight,
+
+    /// If the byte at the data pointer is zero, then instead of moving the
+    /// instruction pointer forward to the next command, jump it forward to the
+    /// command after the matching ] command.
     WhileStart,
+
+    /// If the byte at the data pointer is nonzero, then instead of moving the
+    /// instruction pointer forward to the next command, jump it back to the
+    /// command after the matching [ command.
     WhileEnd,
+
+    /// Accept one byte of input, storing its value in the byte at the data pointer
     CellRead,
+
+    /// Output the byte at the data pointer
     CellWrite,
 }
 
@@ -39,8 +60,13 @@ impl BrainfuckInstrRaw {
 /// Represents the raw Brainfuck instruction and where it is in the file.
 #[derive(Debug, Copy, Clone)]
 pub struct BrainfuckInstr {
+    /// The raw brainfuck instruction
     instr: BrainfuckInstrRaw,
+
+    /// The line number, starting from 1 for humans
     line: usize,
+
+    /// The column number, starting from 1 for humans
     column: usize,
 }
 
@@ -120,6 +146,18 @@ pub struct BrainfuckProg {
 }
 
 impl BrainfuckProg {
+    /// Instantiate a new BrainfuckProg with the given content and associate it
+    /// with the given path.
+    ///
+    /// It is implemented like this so that we don't have to re-open a file if
+    /// it is already open. See also from_file.
+    ///
+    /// # Example
+    /// ```
+    /// # use bft_types::BrainfuckProg;
+    /// # use std::path::Path;
+    /// let bf = BrainfuckProg::new(Path::new("path/to/prog.bf"), "<>[]");
+    /// ```
     pub fn new<P: AsRef<Path>>(path: P, content: &str) -> Self {
         Self {
             path: path.as_ref().to_path_buf(),
