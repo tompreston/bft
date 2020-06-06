@@ -273,7 +273,11 @@ mod tests {
             assert_eq!(p[i].column(), i + 1);
         }
 
-        // Check the program backwards (verify BrainfuckInstrRaw PartialEq)
+        // Check the program backwards to verify BrainfuckInstrRaw PartialEq
+        // actually fails when comparing two BrainfuckInstrRaw which are
+        // different.
+        // Note: This is pointless because we derrive PartialEq, if the standard
+        // implementation is broken then something is very wrong...
         for (i, cinstr) in CORRECT_INSTRS.iter().rev().enumerate() {
             assert_ne!(p[i].instr, *cinstr);
         }
