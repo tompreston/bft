@@ -36,10 +36,10 @@ pub enum BrainfuckVMError {
 /// Debug, Default and Clone
 pub trait BrainfuckCellKind: fmt::Debug + Default + Clone {
     /// Increment the cell (wraps on overflow).
-    fn wrapping_increment(&self) -> Self;
+    fn wrapping_increment(&mut self);
 
     /// Decrement the cell (wraps on underflow).
-    fn wrapping_decrement(&self) -> Self;
+    fn wrapping_decrement(&mut self);
 
     /// Load u8 value into cell.
     fn load_from_u8(&mut self, value: u8);
@@ -50,12 +50,12 @@ pub trait BrainfuckCellKind: fmt::Debug + Default + Clone {
 
 /// An implementation of the BrainfuckCellKind traits for the u8 type.
 impl BrainfuckCellKind for u8 {
-    fn wrapping_increment(&self) -> u8 {
-        self.wrapping_add(1)
+    fn wrapping_increment(&mut self) {
+        *self = self.wrapping_add(1)
     }
 
-    fn wrapping_decrement(&self) -> u8 {
-        self.wrapping_sub(1)
+    fn wrapping_decrement(&mut self) {
+        *self = self.wrapping_sub(1)
     }
 
     fn load_from_u8(&mut self, value: u8) {
@@ -216,7 +216,7 @@ where
     /// assert_eq!(bfvm.cell_increment().ok(), Some(1));
     /// ```
     pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVMError> {
-        self.cells[self.head] = self.cells[self.head].wrapping_increment();
+        self.cells[self.head].wrapping_increment();
         Ok(self.pc + 1)
     }
 
@@ -233,7 +233,7 @@ where
     /// assert_eq!(bfvm.cell_decrement().ok(), Some(1));
     /// ```
     pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVMError> {
-        self.cells[self.head] = self.cells[self.head].wrapping_decrement();
+        self.cells[self.head].wrapping_decrement();
         Ok(self.pc + 1)
     }
 
