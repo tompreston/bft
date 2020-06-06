@@ -181,8 +181,8 @@ impl BrainfuckProg {
     }
 
     /// Returns a reference to the BrainfuckProg's path.
-    pub fn path(&self) -> &PathBuf {
-        &self.path
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
     }
 
     /// Returns a reference to the BrainfuckProg's instructions.
