@@ -6,6 +6,7 @@
 #![deny(missing_docs)]
 
 use std::fmt;
+use std::io;
 use std::path::{Path, PathBuf};
 
 /// Represents the eight raw Brainfuck instructions.
@@ -174,7 +175,7 @@ impl BrainfuckProg {
     /// # use std::path::Path;
     /// let bf = BrainfuckProg::from_file(Path::new("path/to/prog.bf"));
     /// ```
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let content = std::fs::read_to_string(&path)?;
         Ok(Self::new(path, content.as_str()))
     }
