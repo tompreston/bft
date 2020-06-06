@@ -134,7 +134,7 @@ where
         while self.pc <= last_instr {
             let bf_instr = &bf_instrs[self.pc];
 
-            let res = match bf_instr.instr() {
+            self.pc = match bf_instr.instr() {
                 BrainfuckInstrRaw::Increment => self.cell_increment(),
                 BrainfuckInstrRaw::Decrement => self.cell_decrement(),
                 BrainfuckInstrRaw::MoveHeadLeft => self.move_head_left(),
@@ -143,12 +143,7 @@ where
                 BrainfuckInstrRaw::WhileEnd => self.while_end(),
                 BrainfuckInstrRaw::CellRead => self.cell_read(&mut input),
                 BrainfuckInstrRaw::CellWrite => self.cell_write(&mut output),
-            };
-
-            match res {
-                Ok(pc) => self.pc = pc,
-                Err(e) => return Err(e),
-            };
+            }?;
         }
 
         // End of program
