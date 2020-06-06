@@ -1,4 +1,7 @@
 //! A Brainfuck Interpreter written in Rust!
+
+#![deny(missing_docs)]
+
 use bft_interp::BrainfuckVM;
 use bft_types::BrainfuckProg;
 use std::error::Error;

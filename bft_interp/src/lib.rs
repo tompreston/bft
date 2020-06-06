@@ -2,7 +2,7 @@
 //!
 //! This crate contains all the interpreter logic for the BrainfuckVM.
 
-//#![deny(missing_docs)]
+#![deny(missing_docs)]
 
 use bft_types::{BrainfuckInstr, BrainfuckInstrRaw, BrainfuckProg};
 use std::default::Default;
@@ -14,15 +14,19 @@ use thiserror::Error;
 /// Represents a Brainfuck Virtual Machine Error.
 #[derive(Error, fmt::Debug)]
 pub enum BrainfuckVMError {
+    /// When the data head index is out of bounds
     #[error("invalid position for data head, instr {0}")]
     InvalidPosition(BrainfuckInstr),
 
+    /// When an io::Error occurs when reading or writing
     #[error("IO error occured, instr {0}, {0}")]
     IOError(BrainfuckInstr, io::Error),
 
+    /// When the program counter is out of bounds
     #[error("invalid program counter, instr {0}")]
     InvalidProgramCounter(BrainfuckInstr),
 
+    /// When an unmatched or right bracket is found
     #[error("unmatched bracket, instr {0}")]
     UnmatchedBracket(BrainfuckInstr),
 }
