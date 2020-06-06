@@ -331,22 +331,20 @@ mod tests {
     fn test_program_with_matched_brackets() {
         let fake_path = "path/to/file.bf";
         let b = BrainfuckProg::new(fake_path, "<>[[[]-]+],.");
-        b.check().unwrap();
+        assert!(b.check().is_ok());
     }
 
     #[test]
-    #[should_panic]
     fn test_program_with_unmatched_brackets() {
         let fake_path = "path/to/file.bf";
         let b1 = BrainfuckProg::new(fake_path, "<>[[]-+,.");
-        b1.check().unwrap();
+        assert!(b1.check().is_err());
         let b2 = BrainfuckProg::new(fake_path, "<>[[]]]-+,.");
-        b2.check().unwrap();
+        assert!(b2.check().is_err());
     }
 
     #[test]
-    #[should_panic]
     fn test_bad_path() {
-        BrainfuckProg::from_file("/path/to/file.bf").unwrap();
+        assert!(BrainfuckProg::from_file("/path/to/file.bf").is_err());
     }
 }

@@ -165,8 +165,8 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// bfvm.move_head_right().unwrap();
-    /// bfvm.move_head_left().unwrap();
+    /// assert!(bfvm.move_head_right().is_ok());
+    /// assert!(bfvm.move_head_left().is_ok());
     /// ```
     pub fn move_head_left(&mut self) -> Result<usize, BrainfuckVMError> {
         if self.head == 0 {
@@ -186,7 +186,7 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// bfvm.move_head_right().unwrap();
+    /// assert!(bfvm.move_head_right().is_ok());
     /// ```
     pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
         let new_head = self.head + 1;
@@ -213,7 +213,7 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// assert_eq!(bfvm.cell_increment().unwrap(), 1);
+    /// assert_eq!(bfvm.cell_increment().ok(), Some(1));
     /// ```
     pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_increment();
@@ -230,7 +230,7 @@ where
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// assert_eq!(bfvm.cell_decrement().unwrap(), 1);
+    /// assert_eq!(bfvm.cell_decrement().ok(), Some(1));
     /// ```
     pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVMError> {
         self.cells[self.head] = self.cells[self.head].wrapping_decrement();
@@ -249,7 +249,7 @@ where
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let mut reader = io::Cursor::new(vec![42]);
-    /// bfvm.cell_read(&mut reader).unwrap();
+    /// assert!(bfvm.cell_read(&mut reader).is_ok());
     /// ```
     pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
         let mut buffer = [0];
@@ -277,7 +277,7 @@ where
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
     /// let mut buff = io::Cursor::new(vec![42]);
-    /// bfvm.cell_write(&mut buff).unwrap();
+    /// assert!(bfvm.cell_write(&mut buff).is_ok());
     /// assert_eq!(buff.into_inner()[0], 0);
     /// ```
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
@@ -300,8 +300,8 @@ where
     /// # use std::io;
     /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>");
     /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-    /// let rbracket_pc = bfvm.while_start().unwrap();
-    /// assert_eq!(rbracket_pc, 3);
+    /// let rbracket_pc = bfvm.while_start();
+    /// assert_eq!(rbracket_pc.ok(), Some(3));
     /// ```
     pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
         let loop_cond = self.cells[self.head].as_u8() != 0;
@@ -387,34 +387,32 @@ mod tests {
     fn test_brainfuckvm_move_head_left() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-        bfvm.move_head_right().unwrap();
-        bfvm.move_head_left().unwrap();
+        assert!(bfvm.move_head_right().is_ok());
+        assert!(bfvm.move_head_left().is_ok());
     }
 
     #[test]
-    #[should_panic]
     fn test_brainfuckvm_move_head_left_before_zero() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
-        bfvm.move_head_right().unwrap();
-        bfvm.move_head_left().unwrap();
-        bfvm.move_head_left().unwrap();
+        assert!(bfvm.move_head_right().is_ok());
+        assert!(bfvm.move_head_left().is_ok());
+        assert!(bfvm.move_head_left().is_err());
     }
 
     #[test]
     fn test_brainfuckvm_move_head_right() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
-        bfvm.move_head_right().unwrap();
+        assert!(bfvm.move_head_right().is_ok());
     }
 
     #[test]
-    #[should_panic]
     fn test_brainfuckvm_move_head_right_after_max_not_growable() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
-        bfvm.move_head_right().unwrap();
-        bfvm.move_head_right().unwrap();
+        assert!(bfvm.move_head_right().is_ok());
+        assert!(bfvm.move_head_right().is_err());
     }
 
     #[test]
@@ -422,7 +420,7 @@ mod tests {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, true);
         for _ in 1..9001 {
-            bfvm.move_head_right().unwrap();
+            assert!(bfvm.move_head_right().is_ok());
         }
     }
 
@@ -444,7 +442,7 @@ mod tests {
                         assert_eq!(bfvm.cells[cell_check], 0);
                     }
                 }
-                bfvm.cell_increment().unwrap();
+                assert!(bfvm.cell_increment().is_ok());
             }
             // Now we expect the overflow and every cell should be 0
             for cell_check in 0..num_cells {
@@ -452,7 +450,7 @@ mod tests {
             }
 
             if cell_increment < num_cells - 1 {
-                bfvm.move_head_right().unwrap();
+                assert!(bfvm.move_head_right().is_ok());
             }
         }
     }
@@ -467,7 +465,7 @@ mod tests {
         for cell_decrement in 0..num_cells {
             // Check and decrement, until we overflow
             for i in 0..=u8::MAX {
-                bfvm.cell_decrement().unwrap();
+                assert!(bfvm.cell_decrement().is_ok());
                 // Check the value of every cell.
                 // We should have already underflowed.
                 for cell_check in 0..num_cells {
@@ -480,7 +478,7 @@ mod tests {
             }
 
             if cell_decrement < num_cells - 1 {
-                bfvm.move_head_right().unwrap();
+                assert!(bfvm.move_head_right().is_ok());
             }
         }
     }
@@ -498,7 +496,7 @@ mod tests {
 
         let val = 42;
         let mut buff = io::Cursor::new(vec![val, 0]);
-        bfvm.cell_read(&mut buff).unwrap();
+        assert!(bfvm.cell_read(&mut buff).is_ok());
 
         // Now check the first cell is `val`, and every other cell is zero
         assert_eq!(bfvm.cells[0], val);
@@ -517,9 +515,9 @@ mod tests {
         let val = 123;
         bfvm.cells[0] = val;
 
-        // Read the value, throw (unwrap) the error if it fails
+        // Check values can be read
         let mut buff = io::Cursor::new(vec![0, 1]);
-        bfvm.cell_write(&mut buff).unwrap();
+        assert!(bfvm.cell_write(&mut buff).is_ok());
 
         // Check it was written
         let r = buff.get_ref();
@@ -532,16 +530,16 @@ mod tests {
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
 
         bfvm.pc = 0;
-        let pc_after_rbracket = bfvm.while_start().unwrap();
-        assert_eq!(pc_after_rbracket, 3);
+        let pc_after_rbracket = bfvm.while_start();
+        assert_eq!(pc_after_rbracket.ok(), Some(3));
 
         bfvm.pc = 4;
-        let pc_after_rbracket = bfvm.while_start().unwrap();
-        assert_eq!(pc_after_rbracket, 11);
+        let pc_after_rbracket = bfvm.while_start();
+        assert_eq!(pc_after_rbracket.ok(), Some(11));
 
         bfvm.pc = 6;
-        let pc_after_rbracket = bfvm.while_start().unwrap();
-        assert_eq!(pc_after_rbracket, 9);
+        let pc_after_rbracket = bfvm.while_start();
+        assert_eq!(pc_after_rbracket.ok(), Some(9));
     }
 
     #[test]
@@ -550,15 +548,15 @@ mod tests {
         let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
 
         bfvm.pc = 2;
-        let lbracket_pc = bfvm.while_end().unwrap();
-        assert_eq!(lbracket_pc, 0);
+        let lbracket_pc = bfvm.while_end();
+        assert_eq!(lbracket_pc.ok(), Some(0));
 
         bfvm.pc = 8;
-        let lbracket_pc = bfvm.while_end().unwrap();
-        assert_eq!(lbracket_pc, 6);
+        let lbracket_pc = bfvm.while_end();
+        assert_eq!(lbracket_pc.ok(), Some(6));
 
         bfvm.pc = 10;
-        let lbracket_pc = bfvm.while_end().unwrap();
-        assert_eq!(lbracket_pc, 4);
+        let lbracket_pc = bfvm.while_end();
+        assert_eq!(lbracket_pc.ok(), Some(4));
     }
 }
