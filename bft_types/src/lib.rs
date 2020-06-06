@@ -9,6 +9,16 @@ use std::fmt;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use thiserror::Error;
+
+/// Represents a Brainfuck Types Error.
+#[derive(Error, fmt::Debug)]
+pub enum BrainfuckTypesError {
+    /// When an unmatched left or right bracket is found
+    #[error("unmatched bracket, {0:?}")]
+    UnmatchedBracket(BrainfuckInstr),
+}
+
 /// Represents the eight raw Brainfuck instructions.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BrainfuckInstrRaw {
@@ -191,12 +201,12 @@ impl BrainfuckProg {
     }
 
     /// Checks the program and returns the Result.
-    pub fn check(&self) -> Result<(), String> {
+    pub fn check(&self) -> Result<(), BrainfuckTypesError> {
         self.check_brackets()
     }
 
     /// Checks the left and right brackets and returns the Result.
-    fn check_brackets(&self) -> Result<(), String> {
+    fn check_brackets(&self) -> Result<(), BrainfuckTypesError> {
         let mut left_brackets: Vec<&BrainfuckInstr> = Vec::new();
 
         // Collect left brackets and pop when we find matching right brackets.
@@ -206,22 +216,16 @@ impl BrainfuckProg {
             } else if bf_instr.instr == BrainfuckInstrRaw::WhileEnd {
                 match left_brackets.pop() {
                     Some(_) => (),
-                    None => return Err(self.error_msg(bf_instr, "Unmatched ]")),
+                    None => return Err(BrainfuckTypesError::UnmatchedBracket(*bf_instr)),
                 };
             }
         }
 
         // Error if there are remaining unmatched left_brackets
         match left_brackets.iter().last() {
-            Some(v) => Err(self.error_msg(v, "Unmatched [")),
+            Some(&b) => Err(BrainfuckTypesError::UnmatchedBracket(*b)),
             None => Ok(()),
         }
-    }
-
-    /// Returns a nicely formatted error message.
-    fn error_msg(&self, instr: &BrainfuckInstr, msg: &str) -> String {
-        let path_str = self.path().to_string_lossy().into_owned();
-        format!("{}:{}:{}: {}", path_str, instr.line(), instr.column(), msg)
     }
 }
 

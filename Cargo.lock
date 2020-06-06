@@ -38,6 +38,9 @@ dependencies = [
 [[package]]
 name = "bft_types"
 version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.19 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "bitflags"
