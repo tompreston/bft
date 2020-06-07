@@ -314,6 +314,8 @@ where
 
     /// From the provided left-bracket, search for the next matching right-bracket
     /// and return its pc.  Returns an error if no matching bracket is found.
+    // Review comment: We could store information about matching brackets in
+    // .check(), then use it here. I'm not going to both with that.
     fn matching_rbracket(&self, pc_lbracket: usize) -> Result<usize, BrainfuckVMError> {
         let instrs = self.program.instrs();
         let pc_last = instrs.len() - 1;
