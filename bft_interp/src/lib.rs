@@ -184,17 +184,17 @@ where
     /// assert!(bfvm.move_head_right().is_ok());
     /// ```
     pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
-        let new_head = self.head + 1;
-        if new_head >= self.cells.len() {
-            if self.is_growable {
-                // Add another cell and let Rust decide how to grow the Vector
-                self.cells.push(Default::default());
-                return self.move_head_right();
-            } else {
-                return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
-            }
+        // If we're at the end, add another cell and let Rust decide how to grow
+        // the Vector
+        if self.head == self.cells.len() - 1 && self.is_growable {
+            self.cells.push(Default::default());
+            return self.move_head_right();
         }
-        self.head = new_head;
+        // If we're out-of-bounds return an error, maybe head >> cells.len()
+        if self.head >= self.cells.len() - 1 {
+            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
+        }
+        self.head += 1;
         Ok(self.pc + 1)
     }
 
