@@ -248,16 +248,11 @@ where
     /// ```
     pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
         let mut buffer = [0];
-        // We can't try? reader.read(), because we don't know how to convert
-        // from io::Error to BrainfuckVMError::IOError. Maybe we will learn in a
-        // later lesson...
-        match reader.read(&mut buffer) {
-            Ok(_) => {
-                self.cells[self.head].load_from_u8(buffer[0]);
-                Ok(self.pc + 1)
-            }
-            Err(e) => Err(BrainfuckVMError::IOError(self.current_instr(), e)),
-        }
+        reader
+            .read(&mut buffer)
+            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+        self.cells[self.head].load_from_u8(buffer[0]);
+        Ok(self.pc + 1)
     }
 
     /// Write from the current cell, to some writer. Returns the next program
@@ -277,10 +272,10 @@ where
     /// ```
     pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
         let buffer = [self.cells[self.head].as_u8()];
-        match writer.write(&buffer) {
-            Ok(_) => Ok(self.pc + 1),
-            Err(e) => Err(BrainfuckVMError::IOError(self.current_instr(), e)),
-        }
+        writer
+            .write(&buffer)
+            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+        Ok(self.pc + 1)
     }
 
     /// Start a while-loop. Returns the next program counter (loop-body) if data
