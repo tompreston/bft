@@ -275,6 +275,9 @@ where
         writer
             .write(&buffer)
             .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+        writer
+            .flush()
+            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
         Ok(self.pc + 1)
     }
 
