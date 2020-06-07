@@ -4,10 +4,7 @@ pub use structopt::StructOpt;
 
 /// Returns Ok() if string is a non-zero number.
 fn is_num_positive(s: String) -> Result<(), String> {
-    let n: usize = match s.parse() {
-        Ok(v) => v,
-        Err(_) => return Err("Not a number".to_string()),
-    };
+    let n: usize = s.parse().map_err(|_| "Not a number".to_string())?;
     if n == 0 {
         return Err("Not positive".to_string());
     }

@@ -48,10 +48,7 @@ impl<T> Drop for TidyWriter<T> {
 
 /// Run the Brainfuck Interpreter.
 fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
-    let num_cells = match opt.cells {
-        Some(n) => n,
-        None => 0,
-    };
+    let num_cells = opt.cells.unwrap_or_default();
     let bf_prog = BrainfuckProg::from_file(opt.file)?;
     bf_prog.check()?;
 
