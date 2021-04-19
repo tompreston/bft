@@ -18,11 +18,11 @@ fn is_num_positive(s: String) -> Result<(), String> {
     about = "A Brainfuck interpreter written in Rust!"
 )]
 pub struct BrainfuckOpt {
-    /// Set the number of cells in the BrainfuckVM.
+    /// Set the number of cells in the BrainfuckVm.
     #[structopt(short, long, validator = is_num_positive)]
     pub cells: Option<usize>,
 
-    /// Turns on the BrainfuckVM auto-extending tape.
+    /// Turns on the BrainfuckVm auto-extending tape.
     #[structopt(short, long)]
     pub extensible: bool,
 

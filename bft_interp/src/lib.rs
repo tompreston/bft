@@ -1,6 +1,6 @@
 //! Brainfuck interpreter
 //!
-//! This crate contains all the interpreter logic for the BrainfuckVM.
+//! This crate contains all the interpreter logic for the BrainfuckVm.
 
 #![deny(missing_docs)]
 
@@ -13,14 +13,14 @@ use thiserror::Error;
 
 /// Represents a Brainfuck Virtual Machine Error.
 #[derive(Error, fmt::Debug)]
-pub enum BrainfuckVMError {
+pub enum BrainfuckVmError {
     /// When the data head index is out of bounds
     #[error("invalid position for data head, instr {0}")]
     InvalidPosition(BrainfuckInstr),
 
     /// When an io::Error occurs when reading or writing
     #[error("IO error occured, instr {0}, {0}")]
-    IOError(BrainfuckInstr, io::Error),
+    IoError(BrainfuckInstr, io::Error),
 
     /// When the program counter is out of bounds
     #[error("invalid program counter, instr {0}")]
@@ -70,9 +70,9 @@ impl BrainfuckCellKind for u8 {
 /// Represents a Brainfuck Virtual Machine.
 ///
 /// The Brainfuck Virtual Machine interperets and runs BrainfuckProg programs.
-/// The type T specifies what type the BrainfuckVM data cells are.
+/// The type T specifies what type the BrainfuckVm data cells are.
 #[derive(fmt::Debug)]
-pub struct BrainfuckVM<'a, T> {
+pub struct BrainfuckVm<'a, T> {
     /// Data cells in the Brainfuck Virtual Machine.
     cells: Vec<T>,
 
@@ -90,30 +90,30 @@ pub struct BrainfuckVM<'a, T> {
     program: &'a BrainfuckProg,
 }
 
-impl<'a, T> BrainfuckVM<'a, T>
+impl<'a, T> BrainfuckVm<'a, T>
 where
     T: BrainfuckCellKind,
 {
-    /// Returns a new BrainfuckVM with num_cells.
+    /// Returns a new BrainfuckVm with num_cells.
     ///
     /// # Arguments
     ///
     /// * `program` - The Brainfuck program.
-    /// * `num_cells` - Number of data cells in the BrainfuckVM (default: 30000)
+    /// * `num_cells` - Number of data cells in the BrainfuckVm (default: 30000)
     /// * `is_growable` - Sets whether the number of cells can change.
     ///
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// ```
     pub fn new(program: &'a BrainfuckProg, num_cells: usize, is_growable: bool) -> Self {
         let n = if num_cells == 0 { 30_000 } else { num_cells };
         let cells: Vec<T> = vec![T::default(); n];
-        BrainfuckVM {
+        BrainfuckVm {
             cells,
             is_growable,
             head: 0,
@@ -123,7 +123,7 @@ where
     }
 
     /// Interpret the input Brainfuck program, and write data to output.
-    pub fn interpret<R, W>(&mut self, mut input: R, mut output: W) -> Result<(), BrainfuckVMError>
+    pub fn interpret<R, W>(&mut self, mut input: R, mut output: W) -> Result<(), BrainfuckVmError>
     where
         R: io::Read,
         W: io::Write,
@@ -156,16 +156,16 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// assert!(bfvm.move_head_right().is_ok());
     /// assert!(bfvm.move_head_left().is_ok());
     /// ```
-    pub fn move_head_left(&mut self) -> Result<usize, BrainfuckVMError> {
+    pub fn move_head_left(&mut self) -> Result<usize, BrainfuckVmError> {
         if self.head == 0 {
-            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
+            return Err(BrainfuckVmError::InvalidPosition(self.current_instr()));
         }
         self.head -= 1;
         Ok(self.pc + 1)
@@ -177,13 +177,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// assert!(bfvm.move_head_right().is_ok());
     /// ```
-    pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVMError> {
+    pub fn move_head_right(&mut self) -> Result<usize, BrainfuckVmError> {
         // If we're at the end, add another cell and let Rust decide how to grow
         // the Vector
         if self.head == self.cells.len() - 1 && self.is_growable {
@@ -192,7 +192,7 @@ where
         }
         // If we're out-of-bounds return an error, maybe head >> cells.len()
         if self.head >= self.cells.len() - 1 {
-            return Err(BrainfuckVMError::InvalidPosition(self.current_instr()));
+            return Err(BrainfuckVmError::InvalidPosition(self.current_instr()));
         }
         self.head += 1;
         Ok(self.pc + 1)
@@ -204,13 +204,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// assert_eq!(bfvm.cell_increment().ok(), Some(1));
     /// ```
-    pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVMError> {
+    pub fn cell_increment(&mut self) -> Result<usize, BrainfuckVmError> {
         self.cells[self.head].wrapping_increment();
         Ok(self.pc + 1)
     }
@@ -221,13 +221,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// assert_eq!(bfvm.cell_decrement().ok(), Some(1));
     /// ```
-    pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVMError> {
+    pub fn cell_decrement(&mut self) -> Result<usize, BrainfuckVmError> {
         self.cells[self.head].wrapping_decrement();
         Ok(self.pc + 1)
     }
@@ -238,19 +238,19 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// let mut reader = io::Cursor::new(vec![42]);
     /// assert!(bfvm.cell_read(&mut reader).is_ok());
     /// ```
-    pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVMError> {
+    pub fn cell_read(&mut self, reader: &mut impl io::Read) -> Result<usize, BrainfuckVmError> {
         let mut buffer = [0];
         reader
             .read(&mut buffer)
-            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+            .map_err(|e| BrainfuckVmError::IoError(self.current_instr(), e))?;
         self.cells[self.head].load_from_u8(buffer[0]);
         Ok(self.pc + 1)
     }
@@ -261,23 +261,23 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
     /// let prog = BrainfuckProg::new("fake/path.bf", "<>[[[]-]+],.");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// let mut buff = io::Cursor::new(vec![42]);
     /// assert!(bfvm.cell_write(&mut buff).is_ok());
     /// assert_eq!(buff.into_inner()[0], 0);
     /// ```
-    pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVMError> {
+    pub fn cell_write(&mut self, writer: &mut impl io::Write) -> Result<usize, BrainfuckVmError> {
         let buffer = [self.cells[self.head].as_u8()];
         writer
             .write(&buffer)
-            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+            .map_err(|e| BrainfuckVmError::IoError(self.current_instr(), e))?;
         writer
             .flush()
-            .map_err(|e| BrainfuckVMError::IOError(self.current_instr(), e))?;
+            .map_err(|e| BrainfuckVmError::IoError(self.current_instr(), e))?;
         Ok(self.pc + 1)
     }
 
@@ -288,15 +288,15 @@ where
     /// # Example
     ///
     /// ```
-    /// # use bft_interp::BrainfuckVM;
+    /// # use bft_interp::BrainfuckVm;
     /// # use bft_types::BrainfuckProg;
     /// # use std::io;
     /// let prog = BrainfuckProg::new("fake/path.bf", "[>]>");
-    /// let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+    /// let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
     /// let rbracket_pc = bfvm.while_start();
     /// assert_eq!(rbracket_pc.ok(), Some(3));
     /// ```
-    pub fn while_start(&self) -> Result<usize, BrainfuckVMError> {
+    pub fn while_start(&self) -> Result<usize, BrainfuckVmError> {
         let loop_cond = self.cells[self.head].as_u8() != 0;
         if loop_cond {
             Ok(self.pc + 1)
@@ -308,7 +308,7 @@ where
 
     /// End a while-loop body. Returns an unconditional branch to the matching
     /// left-bracket.
-    pub fn while_end(&self) -> Result<usize, BrainfuckVMError> {
+    pub fn while_end(&self) -> Result<usize, BrainfuckVmError> {
         self.matching_lbracket(self.pc)
     }
 
@@ -316,7 +316,7 @@ where
     /// and return its pc.  Returns an error if no matching bracket is found.
     // Review comment: We could store information about matching brackets in
     // .check(), then use it here. I'm not going to both with that.
-    fn matching_rbracket(&self, pc_lbracket: usize) -> Result<usize, BrainfuckVMError> {
+    fn matching_rbracket(&self, pc_lbracket: usize) -> Result<usize, BrainfuckVmError> {
         let instrs = self.program.instrs();
         let pc_last = instrs.len() - 1;
         let mut pc = pc_lbracket;
@@ -330,12 +330,12 @@ where
             };
         }
 
-        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
+        Err(BrainfuckVmError::UnmatchedBracket(self.current_instr()))
     }
 
     /// From the provided right-bracket, search for the next matching left-bracket
     /// and return its pc.  Returns an error if no matching bracket is found.
-    fn matching_lbracket(&self, pc_rbracket: usize) -> Result<usize, BrainfuckVMError> {
+    fn matching_lbracket(&self, pc_rbracket: usize) -> Result<usize, BrainfuckVmError> {
         let instrs = self.program.instrs();
         let pc_first = 0;
         let mut pc = pc_rbracket;
@@ -349,7 +349,7 @@ where
             }
         }
 
-        Err(BrainfuckVMError::UnmatchedBracket(self.current_instr()))
+        Err(BrainfuckVmError::UnmatchedBracket(self.current_instr()))
     }
 
     /// Return the current instruction using the program-counter
@@ -361,7 +361,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::BrainfuckProg;
-    use super::BrainfuckVM;
+    use super::BrainfuckVm;
     use std::io;
 
     const FKPATH: &str = "fake/path.bf";
@@ -369,11 +369,11 @@ mod tests {
     #[test]
     fn test_brainfuckvm_init() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+        let bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
         assert_eq!(bfvm.cells.len(), 30_000);
 
         for num_cells in 1..11 {
-            let bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+            let bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, num_cells, false);
             assert_eq!(bfvm.cells.len(), num_cells);
         }
     }
@@ -381,7 +381,7 @@ mod tests {
     #[test]
     fn test_brainfuckvm_move_head_left() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
         assert!(bfvm.move_head_right().is_ok());
         assert!(bfvm.move_head_left().is_ok());
     }
@@ -389,7 +389,7 @@ mod tests {
     #[test]
     fn test_brainfuckvm_move_head_left_before_zero() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
         assert!(bfvm.move_head_right().is_ok());
         assert!(bfvm.move_head_left().is_ok());
         assert!(bfvm.move_head_left().is_err());
@@ -398,14 +398,14 @@ mod tests {
     #[test]
     fn test_brainfuckvm_move_head_right() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 2, false);
         assert!(bfvm.move_head_right().is_ok());
     }
 
     #[test]
     fn test_brainfuckvm_move_head_right_after_max_not_growable() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 2, false);
         assert!(bfvm.move_head_right().is_ok());
         assert!(bfvm.move_head_right().is_err());
     }
@@ -413,7 +413,7 @@ mod tests {
     #[test]
     fn test_brainfuckvm_move_head_right_after_max_growable() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 2, true);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 2, true);
         for _ in 1..9001 {
             assert!(bfvm.move_head_right().is_ok());
         }
@@ -423,7 +423,7 @@ mod tests {
     fn test_brainfuckvm_cell_increment() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, num_cells, false);
 
         // We're going to test incrementing every cell
         for cell_increment in 0..num_cells {
@@ -454,7 +454,7 @@ mod tests {
     fn test_brainfuckvm_cell_decrement() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, num_cells, false);
 
         // We're going to test decrementing every cell
         for cell_decrement in 0..num_cells {
@@ -482,7 +482,7 @@ mod tests {
     fn test_cell_read_u8() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, num_cells, false);
 
         // Check every cell is zero
         for cell_check in 0..num_cells {
@@ -504,7 +504,7 @@ mod tests {
     fn test_cell_write_u8() {
         let prog = BrainfuckProg::new(FKPATH, "<>[[[]-]+],.");
         let num_cells = 123;
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, num_cells, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, num_cells, false);
 
         // Set the expected value, which is to be read
         let val = 123;
@@ -522,7 +522,7 @@ mod tests {
     #[test]
     fn test_while_start() {
         let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
 
         bfvm.pc = 0;
         let pc_after_rbracket = bfvm.while_start();
@@ -540,7 +540,7 @@ mod tests {
     #[test]
     fn test_while_end() {
         let prog = BrainfuckProg::new("fake/path.bf", "[>]>[>[>]>]");
-        let mut bfvm: BrainfuckVM<u8> = BrainfuckVM::new(&prog, 0, false);
+        let mut bfvm: BrainfuckVm<u8> = BrainfuckVm::new(&prog, 0, false);
 
         bfvm.pc = 2;
         let lbracket_pc = bfvm.while_end();

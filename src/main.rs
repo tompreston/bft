@@ -2,7 +2,7 @@
 
 #![deny(missing_docs)]
 
-use bft_interp::BrainfuckVM;
+use bft_interp::BrainfuckVm;
 use bft_types::BrainfuckProg;
 use std::error::Error;
 use std::io;
@@ -52,7 +52,7 @@ fn run_bft(opt: BrainfuckOpt) -> Result<(), Box<dyn Error>> {
     let bf_prog = BrainfuckProg::from_file(opt.file)?;
     bf_prog.check()?;
 
-    let mut bf_vm: BrainfuckVM<u8> = BrainfuckVM::new(&bf_prog, num_cells, opt.extensible);
+    let mut bf_vm: BrainfuckVm<u8> = BrainfuckVm::new(&bf_prog, num_cells, opt.extensible);
     let twriter = TidyWriter {
         writer: io::stdout(),
         last_u8: 0,
